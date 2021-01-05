@@ -128,8 +128,9 @@ let createButton = (currentPage)=>{
 }
 
 let formatDate=(dateStr)=>{
+    // supported format: yyyy年mm月dd日; yyyy/mm/dd; mm/dd/yyyy; month/dd/yyyy; dd/month/yyyy; yyyy; month/yyyy; mm/yyyy； 
     try{
-        let spl=dateStr.split(/ ?[, ] ?/);
+        let spl=dateStr.split(/ ?[, 年月日] ?/).filter(n=>n);
         const monthNameMap={"jan":"01","feb":"02","mar":"03","apr":"04","may":"05","jun":"06","jul":"07","aug":"08","sep":"09","oct":"10","nov":"11","dec":"12","january":"01","february":"02","march":"03","april":"04","may":"05","june":"06","july":"07","august":"08","september":"09","october":"10","november":"11","december":"12"}
         let month="01", day="01", year='null';
         if (spl.length==1){
@@ -138,14 +139,17 @@ let formatDate=(dateStr)=>{
             month=spl[0];
             year=spl[1];
         } else if (spl.length==3){
-            month=spl[0];
-            day=spl[1]
-            if (monthNameMap[String(day).toLowerCase()]){
-                month=spl[1];
-                day=spl[0];
+            if (spl[0].match(/\d\d\d\d/)){
+                year=spl[0],month=spl[1],day=spl[2];
+            } else {
+                year=spl[2];
+                month=spl[0];
+                day=spl[1]
+                if (monthNameMap[String(day).toLowerCase()]){
+                    month=spl[1];
+                    day=spl[0];
+                }
             }
-            year=spl[2];
-            
         } else {return null;}
         
         month=month.padStart(2,'0').toLowerCase();
@@ -210,15 +214,15 @@ let collectDiscogsMeta=()=>{ // TODO
     const keyRenameMap={'Genre': 'genre', 'Year': 'date', "Format":"media","Released":'date', 'Label': 'label'};
     const valueRenameMap={'Hip Hop':'Rap'}
     for (let i=1;i<profileBlock.children.length-1;i+=2){ //This handles genre, media, date, label
-        let key=profileBlock.children[i].textContent.replace(":","").trim();
-        let value=profileBlock.children[i+1].children[0].textContent.trim(); // TODO: multiple genres, multiple labels, etc
-        
-        key=keyRenameMap[key]
-        if (key){
-            
-            if (valueRenameMap[value]) value=valueRenameMap[value];
-            out[key]=value;
-        }
+        try{
+            let key=profileBlock.children[i].textContent.replace(":","").trim();
+            let value=profileBlock.children[i+1].children[0].textContent.trim(); // TODO: multiple genres, multiple labels, etc; empty entry
+            key=keyRenameMap[key]
+            if (key){
+                if (valueRenameMap[value]) value=valueRenameMap[value];
+                out[key]=value;
+            }
+        } catch (err){}
     }
     if (out['date']) out['date']=formatDate(out['date']);
     out['releaseType']='Album';
