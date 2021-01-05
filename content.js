@@ -190,8 +190,8 @@ let collectBandcampMeta=() =>{
         'label'         : "Self-Released", // Bandcamp doesn't have a generic way for label
         'numberOfDiscs' : "1",
         'isrc'          : null,
-        'tracks'        : Array.from(document.getElementById('track_table').children[0].children).map((ele) =>{
-                            return ele.textContent.replaceAll(/[\n\t ]+/g,' ').replace(/ *buy track */,'')
+        'tracks'        : Array.from(document.getElementById('track_table').children[0].getElementsByClassName("track_row_view")).map((ele) =>{
+                            return ele.textContent.replaceAll(/[\n\t ]+/g,' ').replace(/ *buy track */,'').replace(/ *lyrics */,'')
                         }).join('\n').trim(), 
         'description'   : document.URL+"\n\n"+document.getElementsByClassName("tralbumData tralbum-about")[0].textContent.trim(),
         'imgUrl'        : document.getElementById('tralbumArt').children[0].href
