@@ -1,0 +1,19 @@
+{
+    "manifest_version": 2,
+    "name": "Douban-Helper",
+    "version": "0.1",
+    "description": "豆瓣添加条目助手",
+    "icons": {
+      "48": "icons/icon-48.png"
+    },
+    "content_scripts": [
+      {
+        "matches": ["https://music.douban.com/new_subject","*://*.bandcamp.com/*","*://www.discogs.com/*master*","*://*.bandcamp.com/*","*://www.discogs.com/*release*", "*://music.apple.com/*/album/*"],
+        "js": ["content.js"]
+      }
+    ],
+    "background":{
+        "scripts": ["background.js"]
+    },
+    "permissions":[ "downloads", "tabs"]
+  }
