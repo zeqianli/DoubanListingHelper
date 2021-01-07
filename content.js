@@ -138,7 +138,7 @@ let formatDate=(dateStr)=>{
         } else if (spl.length==2){
             month=spl[0];
             year=spl[1];
-        } else if (spl.length==3){
+        } else if (spl.length>=3){
             if (spl[0].match(/\d\d\d\d/)){
                 year=spl[0],month=spl[1],day=spl[2];
             } else {
@@ -191,12 +191,15 @@ let collectBandcampMeta=() =>{
         'numberOfDiscs' : "1",
         'isrc'          : null,
         'tracks'        : Array.from(document.getElementById('track_table').children[0].getElementsByClassName("track_row_view")).map((ele) =>{
-                            return ele.textContent.replaceAll(/[\n\t ]+/g,' ').replace(/ *buy track */,'').replace(/ *lyrics */,'').replace(/ *video */,'')
+                            return ele.textContent.replaceAll(/[\n\t ]+/g,' ').replace(/ *buy track */,'').replace(/ *lyrics */,'').replace(/ *video */,'').trim()
                         }).join('\n').trim(), 
-        'description'   : document.URL+"\n\n"+document.getElementsByClassName("tralbumData tralbum-about")[0].textContent.trim(),
+        'description'   : document.URL,
         'imgUrl'        : document.getElementById('tralbumArt').children[0].href
     }
     out['date']=formatDate(out['date']);
+    try{
+        out['description']+="\n\n"+document.getElementsByClassName("tralbumData tralbum-about")[0].textContent.trim()
+    } catch (err){}
     return out;
 }
 
@@ -368,3 +371,24 @@ if (metaStored){
 }
 
 console.log('content script ends');
+
+
+// TODO
+// https://www.discogs.com/Various-Sweet-House-Chicago/master/79323
+// https://adaptedrecords.bandcamp.com/album/freedom
+// https://music.apple.com/cn/album/%E6%90%96%E6%BB%BE86/1391495014 (date)
+// get track duration on apple music
+// https://www.discogs.com/Greekboy-Shaolin-Technics/release/11434711 (format)
+// https://music.apple.com/us/album/the-palmwine-express/1491006159 (url)
+// https://www.discogs.com/Various-Starship-The-De-Lite-Superstars/release/569725 (genre name map)
+// https://www.discogs.com/Richard-Groove-Holmes-Soul-Power/release/2997598 (artist)
+// [FIXED] bc track list sometimes has extra space (https://lbrecordings.bandcamp.com/album/l-b020-hyperromantic-isle-of-dead-ep)
+// Master page on discogs grab label from the first release. 
+// Recognize digital on discog from format like this https://www.discogs.com/DJ-Trax-Find-A-Way-EP/release/16466505 
+// Recognize artist/duration on apple music like this https://music.apple.com/us/album/lo-fi-house-zip/1490994043
+// Auto recognize EP in album title: https://how2make.bandcamp.com/album/vortex-ep
+// Recognize label on bandcamp from side column (if label==artist then use self-released)
+// Recognize "12''" on discogs https://www.discogs.com/Wax-Doctor-Cruise-Control-EP/release/90227 
+// guess a release is EP/album by track count/track list numbering
+// Multiple artists on bandcamp? 
+// Add tags onto bandcamp description

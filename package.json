@@ -1,0 +1,26 @@
+{
+  "name": "douban-listing-helper",
+  "version": "0.2.0",
+  "description": "一键添加豆瓣条目 Create Douban listing with one click",
+  "main": "background.js",
+  "dependencies": {
+    "webextension-polyfill": "^0.7.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zeqianli/DoubanListingHelper.git"
+  },
+  "keywords": [
+    "douban"
+  ],
+  "author": "Zeqian Li",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zeqianli/DoubanListingHelper/issues"
+  },
+  "homepage": "https://github.com/zeqianli/DoubanListingHelper#readme"
+}
