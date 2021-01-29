@@ -177,24 +177,33 @@ let collectMeta=(currentPage) => {
 }
 
 let collectBandcampMeta=() =>{
-    out= {
-        'url'           : document.URL,
-        'album'         : document.getElementById('name-section').children[0].textContent.trim(),
-        'barcode'       : null,
-        'albumAltName'  : null,
-        'artists'       : [document.getElementById('name-section').children[1].getElementsByTagName('span')[0].textContent.trim()],
-        'genre'         : 'Electronic',
-        'releaseType'   : 'Album', // Not labeled on Bandcamp
-        'media'         : 'Digital', // Not labeled on Bandcamp
-        'date'          : document.getElementsByClassName("tralbumData tralbum-credits")[0].textContent.trim().split('\n')[0].replace('released ',''),
-        'label'         : "Self-Released", // Bandcamp doesn't have a generic way for label
-        'numberOfDiscs' : "1",
-        'isrc'          : null,
-        'tracks'        : Array.from(document.getElementById('track_table').children[0].getElementsByClassName("track_row_view")).map((ele) =>{
-                            return ele.textContent.replaceAll(/[\n\t ]+/g,' ').replace(/ *buy track */,'').replace(/ *lyrics */,'').replace(/ *video */,'').trim()
-                        }).join('\n').trim(), 
-        'description'   : document.URL,
-        'imgUrl'        : document.getElementById('tralbumArt').children[0].href
+    var album = document.getElementById('name-section').children[0].textContent.trim();
+
+    // 对于无 tracks 的单曲用专辑名填充，防止空指针
+    var tracks = document.getElementById('track_table');
+    var t_str = tracks != null ? Array.from(document.getElementById('track_table').children[0].getElementsByClassName("track_row_view")).map((ele) => {
+        return ele.textContent.replaceAll(/[\n\t ]+/g, ' ').replace(/ *buy track */, '').replace(/ *lyrics */, '').replace(/ *video */, '').trim()
+    }).join('\n').trim() : album;
+
+    // 修复艺术家名称
+    var artists_dom = document.querySelector('#name-section a[href*="bandcamp.com"]');
+    var artists = artists_dom != null ? [artists_dom.textContent] : [document.getElementById('band-name-location').children[0].textContent.trim()];
+    out = {
+        'url': document.URL,
+        'album': album,
+        'barcode': null,
+        'albumAltName': null,
+        'artists': artists,
+        'genre': 'Electronic',
+        'releaseType': 'Album', // Not labeled on Bandcamp
+        'media': 'Digital', // Not labeled on Bandcamp
+        'date': document.getElementsByClassName("tralbumData tralbum-credits")[0].textContent.trim().split('\n')[0].replace('released ', ''),
+        'label': "Self-Released", // Bandcamp doesn't have a generic way for label
+        'numberOfDiscs': "1",
+        'isrc': null,
+        'tracks': t_str,
+        'description': document.URL,
+        'imgUrl': document.getElementById('tralbumArt').children[0].href
     }
     out['date']=formatDate(out['date']);
     try{
