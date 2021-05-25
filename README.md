@@ -4,7 +4,7 @@ forked from zeqianli/DoubanListingHelper[https://github.com/zeqianli/DoubanListi
 ## Manual
 
 **安装**
-- 点击github页面绿色按钮下载压缩包。
+- 点击 github 页面绿色按钮下载压缩包。
 - Firefox：下载全部文件解压。在 firefox 地址栏中输入 "about:debugging"，点左侧栏中“此firefox (This firefox)"，点“临时载入附加组件 (Load Temporary Add-on)”，选中文件夹中任何一个文件（例如manifest.json)即可。**由于插件未正式发布，每次重启firefox需重新安装。**
 - Chrome：下载全部文件解压。在 chrome 地址栏中输入 chrome://extensions/, 点击开发者模式（Developer mode），再将插件文件夹拖至该页面。
 
