@@ -1,4 +1,4 @@
-console.log('content script starts');
+// console.log('content script starts');
 
 // ====== Utilities ======
 
@@ -24,92 +24,207 @@ let getCurrentPage=()=>{
     return page
 }
 
+class Listing {
+    static keys=null
+    
+    constructor(data=null){
+        this.data={};
+        for (let key in this.keys) this.data[key]=null;
+        if (data){
+            for (let key in data){
+                this.set(key, data[key]);
+            }
+        }
+    }
+
+    get(key){return this.data[key]}
+
+    set(key, value){
+        if (key=="date"){
+            this.data[key]=this.formatDate(dataStr);
+        } else {
+            this.data[key]=value
+        }
+    }
+
+
+    formatDate(dateStr) {
+        // supported format: yyyy年mm月dd日; yyyy/mm/dd; mm/dd/yyyy; month/dd/yyyy; dd/month/yyyy; yyyy; month/yyyy; mm/yyyy； 
+        try{
+            let spl=dateStr.split(/ ?[, 年月日] ?/).filter(n=>n);
+            const monthNameMap={"jan":"01","feb":"02","mar":"03","apr":"04","may":"05","jun":"06","jul":"07","aug":"08","sep":"09","oct":"10","nov":"11","dec":"12","january":"01","february":"02","march":"03","april":"04","may":"05","june":"06","july":"07","august":"08","september":"09","october":"10","november":"11","december":"12"}
+            let month="01", day="01", year='null';
+            if (spl.length==1){
+                year=dateStr;
+            } else if (spl.length==2){
+                month=spl[0];
+                year=spl[1];
+            } else if (spl.length>=3){
+                if (spl[0].match(/\d\d\d\d/)){
+                    year=spl[0],month=spl[1],day=spl[2];
+                } else {
+                    year=spl[2];
+                    month=spl[0];
+                    day=spl[1]
+                    if (monthNameMap[String(day).toLowerCase()]){
+                        month=spl[1];
+                        day=spl[0];
+                    }
+                }
+            } else {return null;}
+            
+            month=month.padStart(2,'0').toLowerCase();
+            if (monthNameMap[month]) month=monthNameMap[month];
+            day=day.padStart(2,'0')
+            return `${year}-${month}-${day}`;
+        } catch(err){
+            return null
+        }
+    }
+
+}
+
+class MusicListing extends Listing{
+    static keys=['album', 'artist1','artist2','artist3','genre']
+}
+
+class MovieListing extends Listing{
+
+
+}
+
+
+
+class GameListing extends Listing {
+
+
+}
+
+class BookListing extends Listing {
+
+}
+
+
+
 const localStorageId='DoubanListingMetadata'
 
 // ====== Douban ====== 
 
-let fillDropdown=(dropdown, value, valueIndexMap)=>{
-    let i=valueIndexMap[value];
-    console.log(i);
-    if (i || i==0) dropdown.getElementsByClassName('options')[0].getElementsByClassName('sub')[i].click();
-}
+class DoubanPage {
+    
+    constructor(){
 
-// douban listing page 1
-let fillDouban1=(meta, click=false) =>{                              
-    document.getElementById('p_title').value=meta['album']; // album
-    let button;
-    if (meta['barcode']){
-        console.log('have barcode');
-        document.getElementById('uid').value=meta['barcode']; //barcode
-        button=document.getElementsByClassName('submit')[0];
-    } else{
-        button=document.getElementsByClassName('btn-link')[0];
     }
-    if (click) button.click(); 
-}
+    getElements(){
+        throw "Not Implemented"
+    }  
 
-// douban listing page 2
-let fillDouban2=(meta,click=false) =>{
-    document.getElementsByClassName('item basic')[0].getElementsByClassName('input_basic modified')[0].value=meta['album'];
-    document.getElementsByClassName('item basic')[1].getElementsByClassName('datepicker input_basic hasDatepicker')[0].value=meta['date'];
-    document.getElementsByClassName('item basic')[2].getElementsByClassName('input_basic')[0].value=meta['label'];
-    document.getElementsByClassName('item basic')[3].getElementsByClassName('input_basic')[0].value=meta['numberOfDiscs'];
-    document.getElementsByClassName('item basic')[4].getElementsByClassName('input_basic')[0].value=meta['isrc'];
-    document.getElementsByClassName('item list')[0].getElementsByClassName('input_basic')[0].value=meta['albumAltName'];
+    fill(listing) {
+        let elements=this.getElements()
+        for (let key in elements){
+            try{
+                let value=listing.get(value)
+                if (value)
+                    this.fillElement(elements[key][2],elements[key][0], elements[key][1],value)
+            } catch(err){
+                console.log("Can't fill "+key); 
+            }
+        }
 
-    if (meta['artists']){  //TODO: more than 3 artists
-        for (let i=0;i<Math.min(3,meta['artists'].length);i++){
-            document.getElementsByClassName('item list musicians')[0].getElementsByClassName('input_basic')[i].value=meta['artists'][i];
+    }
+
+    fillElement(element, elementType, elementParas,value){    
+        // fill value to the web element
+        switch (elementType){
+            case 'text': // small textbox
+            case 'textLarge': // large textbox
+            case 'date': // date
+                element.value=value;
+                break;
+            case 'dropdown': // dropdown 
+                try{
+                    fillDropdown(element, value, elementParas);
+                } catch {err} {
+                    throw "Illegal dropdown parameter!";
+                }
+                
+        }
+    } 
+
+    fillDropdown(dropdown, value, keys){
+        let i=0;
+        for (key in keys){
+            if (value==key) break;
+            i+=1
+        }
+        // console.log(i);
+        if (i<length(keys)) {
+            dropdown.getElementsByClassName('options')[0].getElementsByClassName('sub')[i].click();
         }
     }
-    // items= // TODO
-    fillDropdown(document.getElementsByClassName('dropdown')[0], // genre
-                meta['genre'],
-                {
-                    'Blues': 0, 
-                    'Classical': 1,
-                    'EasyListening': 2, 
-                    'Electronic': 3,
-                    'Folk': 4, 
-                    'FunkSoulRnB': 5,
-                    'Jazz':6,
-                    'Latin':7,
-                    'Pop':8,
-                    'Rap':9,
-                    'Reggae': 10,
-                    'Rock': 11,
-                    'Soundtrack': 12,
-                    'World': 13
-                });
-    fillDropdown(document.getElementsByClassName('dropdown')[1], // releaseType
-                meta['releaseType'],
-                {
-                    'Album': 0, 
-                    'Compilation': 1,
-                    'EP': 2, 
-                    'Single': 3,
-                    'Bootleg': 4, 
-                    'Video': 5
-                });
-    fillDropdown(document.getElementsByClassName('dropdown')[2], // media
-                meta['media'],
-                {
-                    'CD': 0, 
-                    'Digital': 1,
-                    'Cassette': 2, 
-                    'Vinyl': 3
-                });
-    document.getElementsByClassName('item text section')[0].getElementsByClassName('textarea_basic')[0].value= meta['tracks'];
-    document.getElementsByClassName('item text section')[1].getElementsByClassName('textarea_basic')[0].value=meta['description'];
 
-    if (click) document.getElementsByClassName('submit')[0].click();
 }
 
-// douban listing page 3
-let fillDouban3=(meta,click=false) =>{ // TODO: auto-select image
-    return null;
+class DoubanMusicPage1 extends DoubanPage {
+
+    getElements(){
+        let elements={}
+        elements['album']=['text',null,document.getElementById('p_title')]
+        elements['barcode']=['text',null,document.getElementById('uid')]
+        return elements
+    }
+
+    click(listing){
+        let button;
+        if (listing.get('barcode')){
+            // console.log('have barcode');
+            button=document.getElementsByClassName('submit')[0];
+        } else{
+            button=document.getElementsByClassName('btn-link')[0];
+        }
+        button.click(); 
+    }
+}
+
+
+class DoubanMusicPage2 extends DoubanPage {
+
+    getElements(){
+        let elements={}
+        elements['album']=['text',null,document.getElementsByClassName('item basic')[0].getElementsByClassName('input_basic modified')]
+        elements['date']=['date',null,document.getElementsByClassName('item basic')[1].getElementsByClassName('datepicker input_basic hasDatepicker')[0]]
+        elements['label']=['text',null,document.getElementsByClassName('item basic')[2].getElementsByClassName('input_basic')[0]]
+        elements['numberOfDiscs']=['text',null,document.getElementsByClassName('item basic')[3].getElementsByClassName('input_basic')[0]]
+        elements['isrc']=['text',null,document.getElementsByClassName('item basic')[4].getElementsByClassName('input_basic')[0]]
+        elements['albumAltName']=['text',null,document.getElementsByClassName('item list')[0].getElementsByClassName('input_basic')[0]]
+        elements['artist0']=['text',null,document.getElementsByClassName('item list musicians')[0].getElementsByClassName('input_basic')[0]];
+        elements['artist1']=['text',null,document.getElementsByClassName('item list musicians')[0].getElementsByClassName('input_basic')[1]];
+        elements['artist2']=['text',null,document.getElementsByClassName('item list musicians')[0].getElementsByClassName('input_basic')[2]];
+        elements['genre']=['dropdown',this.dropdownKeys['genre'],document.getElementsByClassName('dropdown')[0]];
+        elements['releaseType']=['dropdown',this.dropdownKeys['releaseType'],document.getElementsByClassName('dropdown')[1]];
+        elements['media']=['dropdown',this.dropdownKeys['media'],document.getElementsByClassName('dropdown')[2]];
+        elements['tracks']=['textLarge',null,document.getElementsByClassName('item text section')[0].getElementsByClassName('textarea_basic')[0]]
+        elements['description']=['textLarge',null,document.getElementsByClassName('item text section')[1].getElementsByClassName('textarea_basic')[0]]
+
+        return elements
+    }
     
+    dropdownKeys={
+        'genre':['Blues','Classical','EasyListening','Electronic','Folk','FunkSoulRnB','Jazz','Latin','Pop','Rap','Reggae' ,'Rock','Soundtrack','World'],
+        'releaseType':['Album', 'Compilation','EP', 'Single','Bootleg', 'Video'],
+        'media':['CD','Digital','Cassette','Vinyl']
+    }
+
+    click(listing){
+        throw "NotImplemented"
+    }    
 }
+
+class DoubanMusicPage3 extends DoubanPage { // TODO: auto-select image
+    constructor(){
+        throw "NotImplemented"
+    }
+} 
 
 
 
@@ -127,39 +242,68 @@ let createButton = (currentPage)=>{
     document.body.appendChild(button);
 }
 
-let formatDate=(dateStr)=>{
-    // supported format: yyyy年mm月dd日; yyyy/mm/dd; mm/dd/yyyy; month/dd/yyyy; dd/month/yyyy; yyyy; month/yyyy; mm/yyyy； 
-    try{
-        let spl=dateStr.split(/ ?[, 年月日] ?/).filter(n=>n);
-        const monthNameMap={"jan":"01","feb":"02","mar":"03","apr":"04","may":"05","jun":"06","jul":"07","aug":"08","sep":"09","oct":"10","nov":"11","dec":"12","january":"01","february":"02","march":"03","april":"04","may":"05","june":"06","july":"07","august":"08","september":"09","october":"10","november":"11","december":"12"}
-        let month="01", day="01", year='null';
-        if (spl.length==1){
-            year=dateStr;
-        } else if (spl.length==2){
-            month=spl[0];
-            year=spl[1];
-        } else if (spl.length>=3){
-            if (spl[0].match(/\d\d\d\d/)){
-                year=spl[0],month=spl[1],day=spl[2];
-            } else {
-                year=spl[2];
-                month=spl[0];
-                day=spl[1]
-                if (monthNameMap[String(day).toLowerCase()]){
-                    month=spl[1];
-                    day=spl[0];
-                }
-            }
-        } else {return null;}
-        
-        month=month.padStart(2,'0').toLowerCase();
-        if (monthNameMap[month]) month=monthNameMap[month];
-        day=day.padStart(2,'0')
-        return `${year}-${month}-${day}`;
-    } catch(err){
-        return null
+
+class SourcePage {
+    keys=null
+    pageType=null
+    listing=null
+
+    constructor(){
+        switch (this.pageType){
+            case 'music':
+                this.listing=new MusicListing();
+                break;
+            case 'movie':
+                this.listing=new MovieListing();
+                break;
+            case ''
+        }
+    }
+
+    collect(){
+
+        for (let key in keys){
+
+        }
+    }
+
+    collectItem(key){
+
+    }
+
+
+
+}
+
+class MusicPage extends SourcePage {
+    keys=MusicListing.keys
+    collect(){
+        let listing=new MusicListing
+        for (let key in keys){
+
+        }
     }
 }
+
+class MoviePage extends SourcePage{
+    keys=MoviePage.keys
+}
+
+class GamePage extends SourcePage{
+    keys=GameListing.keys
+}
+
+class BookPage extends SourcePage{
+    keys=BookListing.keys
+}
+
+class Bandcamp extends SourcePage {
+
+}
+
+class 
+
+
 
 let collectMeta=(currentPage) => {
     switch (currentPage){
