@@ -1,8 +1,8 @@
-// console.log('content script starts');
+console.log('content script starts');
 
 
 let listingKeys={
-    'music':    ['album','barcode','albumAltName','artist1','artist1','genre','releaseType','media','date','label','numOfDiscs','isrc','tracks','description'],
+    'music':    ['url','album','barcode','albumAltName','artist0','artist1','artist2','genre','releaseType','media','date','label','numberOfDiscs','isrc','tracks','description','imgUrl'],
     'movie':    [],
     'game':     [],
     'book':     []
@@ -12,14 +12,14 @@ let listingKeys={
 // ====== Douban ====== 
 
 class DoubanPage {
-    keys=null;
 
     constructor(){
-
+        this.keys=null;
     }
  
     fill(listing) {
-        for (key in this.keys){
+        console.log(this.keys);
+        for (let key of this.keys){
             let element=this.getElement(key) // an array: [element, elementType, elementParas]
             try{
                 this.fillElement(element[2],element[0],element[1],listing[key])
@@ -42,8 +42,9 @@ class DoubanPage {
                 element.value=value;
                 break;
             case 'dropdown': // dropdown 
+                console.log("check");
                 try{
-                    fillDropdown(element, value, elementParas);
+                    this.fillDropdown(element, value, elementParas);
                 } catch {err} {
                     throw "Illegal dropdown parameter!";
                 }
@@ -52,13 +53,15 @@ class DoubanPage {
     } 
 
     fillDropdown(dropdown, value, keys){
+        console.log("filling dropdown");
         let i=0;
-        for (key in keys){
+        for (let key of keys){
             if (value==key) break;
             i+=1;
         }
-        // console.log(i);
-        if (i<length(keys)) {
+
+        console.log(i);
+        if (i<keys.length) {
             dropdown.getElementsByClassName('options')[0].getElementsByClassName('sub')[i].click();
         }
     }
@@ -66,7 +69,12 @@ class DoubanPage {
 }
 
 class DoubanMusicPage1 extends DoubanPage {
-    keys=listingKeys['music'];
+
+    constructor(){
+        super();
+        this.keys=listingKeys['music'];
+        
+    }
 
     getElement(key){
         switch (key){
@@ -76,8 +84,9 @@ class DoubanMusicPage1 extends DoubanPage {
     }
 
     click(listing){
+        console.log("clicking");
         let button;
-        if (listing.get('barcode')){
+        if (listing['barcode']){
             // console.log('have barcode');
             button=document.getElementsByClassName('submit')[0];
         } else{
@@ -89,13 +98,17 @@ class DoubanMusicPage1 extends DoubanPage {
 
 
 class DoubanMusicPage2 extends DoubanPage {
-    keys=listingKeys['music'];
-
-    dropdownKeys={
-        'genre':['Blues','Classical','EasyListening','Electronic','Folk','FunkSoulRnB','Jazz','Latin','Pop','Rap','Reggae' ,'Rock','Soundtrack','World'],
-        'releaseType':['Album', 'Compilation','EP', 'Single','Bootleg', 'Video'],
-        'media':['CD','Digital','Cassette','Vinyl']
+    constructor(){
+        super();
+        this.keys=listingKeys['music'];
+        this.dropdownKeys={
+            'genre':['Blues','Classical','EasyListening','Electronic','Folk','FunkSoulRnB','Jazz','Latin','Pop','Rap','Reggae' ,'Rock','Soundtrack','World'],
+            'releaseType':['Album', 'Compilation','EP', 'Single','Bootleg', 'Video'],
+            'media':['CD','Digital','Cassette','Vinyl']
+        }
     }
+
+
 
     getElement(key){
         switch (key){
@@ -115,15 +128,14 @@ class DoubanMusicPage2 extends DoubanPage {
             case 'description': return ['textLarge',null,document.getElementsByClassName('item text section')[1].getElementsByClassName('textarea_basic')[0]];
         }
     }
-    
-    click(listing){
-        // Jump to the next page
-        throw "NotImplemented"
-    }    
+ 
 }
 
 class DoubanMusicPage3 extends DoubanPage { // TODO: auto-select image
-    keys=listingKeys['music'];
+    constructor(){
+        super();
+        this.keys=listingKeys['music'];
+    }
 } 
 
 class DoubanMoviePage1 extends DoubanPage {
@@ -154,23 +166,25 @@ class DoubanGamePage2 extends DoubanPage {
 // ===== SourcePage ======
 
 class SourcePage {
-    keys=null
-    data={}
-
     constructor(){
-        for (let key in keys){
-            this.data[keys]=null
-        }
+        this.keys=null;
+        this.data={};
+        this.doubanLink=null;
     }
 
     collect(){
-        for (let key in keys){
+        console.log(this.keys);
+        for (let key of this.keys){
+            this.data[key]=null;
+        }
+        for (let key of this.keys){
+            console.log(key);
             try {
                 this.data[key]=this.collectItem(key);
                 if (key=='date') this.data[key]=this.formatDate(this.data[key]);
                 else if (key=='description'){
-                    const suffix="本条目由豆瓣条目添加助手自动生成（https://www.douban.com/note/790499272/)，如有信息错误请更正。感谢为豆瓣添砖加瓦。"
-                    this.data['key']=this.data['key']+"\n\n" + suffix;
+                    const suffix="本条目由豆瓣条目添加助手自动生成（https://www.douban.com/note/790499272/)，如有信息错误请更正。"
+                    this.data[key]=this.data[key]+"\n\n" + suffix;
                 }
             } catch (err) {
                 console.log("Error for collecting " + key);
@@ -223,7 +237,13 @@ class SourcePage {
 }
 
 class Bandcamp extends SourcePage {
-    keys=listingKeys['music'];
+
+    constructor(){
+        super();
+        this.keys=listingKeys['music'] // TODO: static variable
+        this.doubanLink="https://music.douban.com/new_subject";
+        this.data={}
+    }
 
     collectItem(key){  
         switch (key){
@@ -231,11 +251,11 @@ class Bandcamp extends SourcePage {
             case 'album'         : return document.getElementById('name-section').children[0].textContent.trim();
             case 'barcode'       : return null;
             case 'albumAltName'  : return null;
-            case 'artist1'       : return [document.getElementById('name-section').children[1].getElementsByTagName('span')[0].textContent.trim()];
-            case 'artist2'       : return [document.getElementById('name-section').children[1].getElementsByTagName('span')[0].textContent.trim()];
-            case 'artist3'       : return [document.getElementById('name-section').children[1].getElementsByTagName('span')[0].textContent.trim()];
+            case 'artist0'       : return document.getElementById('name-section').children[1].getElementsByTagName('span')[0].textContent.trim();  // TODO: multiple artists? 
+            case 'artist1'       : return null
+            case 'artist2'       : return null;
             case 'genre'         : return 'Electronic';
-            case 'releaseType'   : return 'Album'; // Not labeled on Bandcamp
+            case 'releaseType'   : return 'Album'; // TODO: infer by # of tracks
             case 'media'         : return 'Digital'; // Not labeled on Bandcamp
             case 'date'          : return document.getElementsByClassName("tralbumData tralbum-credits")[0].textContent.trim().split('\n')[0].replace('released ','');
             case 'label'         : return "Self-Released"; // Bandcamp doesn't have a generic way for label
@@ -257,9 +277,16 @@ class Bandcamp extends SourcePage {
 }
 
 class AppleMusic extends SourcePage {
-    keys=listKeys['music'];
+    
+    constructor(){
+        super();
+        this.keys=listingKeys['music'] // TODO: static variable
+        this.doubanLink="https://music.douban.com/new_subject";
+        this.data={}
+    }
 
     collectItem(key){
+        
         switch (key){
             case 'url': return document.URL;
             case 'album': return document.getElementsByClassName('album-header-metadata')[0].children[0].textContent.trim();
@@ -298,8 +325,13 @@ class AppleMusic extends SourcePage {
     }
 }
 
-class Discog extends SourcePage {
-    keys=listKeys['music'];
+class Discogs extends SourcePage {
+    constructor(){
+        super();
+        this.keys=listingKeys['music'] // TODO: static variable
+        this.doubanLink="https://music.douban.com/new_subject";
+        this.data={}
+    }
 
     collectItem(key){
         switch(key){
@@ -393,16 +425,17 @@ class AmazonBook extends SourcePage {
 
 
 let getCurrentPage=()=>{
-    let match=window.location.href.match(/([\w]+)\.com/);
+    // Get current page 
+    let match=document.URL.match(/([\w]+)\.com/);
     let site=match && match[1];
     let page;
 
     switch(site){
         case 'douban':
             let nBasic=document.getElementsByClassName('basic').length;
-            if (nBasic==2) page='douban-1';
-            else if (nBasic>2) page='douban-2';
-            else page='douban-3';
+            if (nBasic==2) page='doubanMusic1';
+            else if (nBasic>2) page='doubanMusic2';
+            else page='doubanMusic3';
             break;
         case 'bandcamp':
         case 'discogs':
@@ -414,23 +447,7 @@ let getCurrentPage=()=>{
     return page
 }
 
-let collectMeta=(currentPage) => {
-    switch (currentPage){
-        case "bandcamp":
-            return collectBandcampMeta();
-        case "discogs":
-            return collectDiscogsMeta();
-        case "soundcloud":
-           return collectSoundcloudMeta();
-        case "apple":
-            return collectAppleMeta();
-        default:
-            return null
-    }
-}
-
-
-const localStorageId='DoubanListingMetadata'
+const localStorageID='DoubanListingData';
 
 
 let createButton = (currentPage)=>{
@@ -438,57 +455,85 @@ let createButton = (currentPage)=>{
     button.innerHTML ="Collect";
     button.style = "top:0;left:0;position:absolute;z-index:9999";
     button.onclick=function(){
-        let meta=collectMeta(currentPage);
-        browser.runtime.sendMessage({page:currentPage,meta: JSON.stringify(meta)});
-        window.open("https://music.douban.com/new_subject");
+        console.log("button clicked. ")
+
+        let page;
+        
+        switch (currentPage){
+            case 'bandcamp':
+                try{
+                    page=new Bandcamp();
+                } catch (err){console.log(err);}
+                console.log("bc2");
+                break;
+            case 'discogs': 
+                page=new Discogs();
+                break;
+            case 'apple':
+                page=new AppleMusic();
+                break;
+        }
+        console.log("button clicked. ")
+        try{
+            let data=page.collect();
+            browser.runtime.sendMessage({"page":currentPage,"data": JSON.stringify(data)});
+            console.log(data);
+            window.open(page.doubanLink);
+        } catch(err) {console.log(err);}
+        
     };
     document.body.appendChild(button);
+
 }
 
 let main = ()=>{
     let currentPage=getCurrentPage();
 
     // Default action: add buttons to bandcamp/discogs/soundcloud/apple pages
+    
     switch(currentPage){
         case 'bandcamp':
         case 'discogs':
         case 'apple':
         // case 'soundcloud':
             createButton(currentPage);
-        case 'douban-1':
-        case 'douban-2':
-        case 'douban-3':
+        case 'doubanMusic1':
+        case 'doubanMusic2':
+        case 'doubanMusic3':
             browser.runtime.sendMessage({page:currentPage});
             break;
     }
 
     // listens to background script message
-    // only get message on douban-1 opened by the bandcamp button
+    // only get message on doubanMusic1 opened by the bandcamp button
     browser.runtime.onMessage.addListener(message => {
         console.log("Message from the background script:");
-        if (message.meta){
-            let metaBackground=JSON.parse(message.meta)
-            if(currentPage=='douban-1'){
-                fillDouban1(metaBackground,click=true);
-                localStorage.setItem(localStorageId, JSON.stringify(metaBackground));
+        if (message.data){
+            let dataBackground=JSON.parse(message.data)
+            if(currentPage=='doubanMusic1'){
+                let page=new DoubanMusicPage1();
+                page.fill(dataBackground);
+                localStorage.setItem(localStorageID, JSON.stringify(dataBackground));
+                try{
+                    page.click(dataBackground);
+                } catch (err){console.log(err);}
             }
         }
-
     });
 
-    // autofill douban-2 if meta is stored to localStorage
-    let metaStored=localStorage.getItem(localStorageId)
-    if (metaStored){
-        metaStored=JSON.parse(metaStored);
-        if (currentPage=='douban-2'){
-            fillDouban2(metaStored,click=false);
+    // autofill douban-2 if da ta is stored to localStorage
+    let dataStored=localStorage.getItem(localStorageID)
+    if (dataStored){
+        dataStored=JSON.parse(dataStored);
+        if (currentPage=='doubanMusic2'){
+            let page=new DoubanMusicPage2();
+            page.fill(dataStored);
         }
-        localStorage.removeItem(localStorageId);
+        localStorage.removeItem(localStorageID);
     }
-
 }
 
-main()
+main();
 
 
 console.log('content script ends');
