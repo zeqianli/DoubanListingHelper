@@ -18,7 +18,7 @@ class DoubanPage {
     }
  
     fill(listing) {
-        console.log(this.keys);
+        //console.log(this.keys);
         for (let key of this.keys){
             let element=this.getElement(key) // an array: [element, elementType, elementParas]
             try{
@@ -42,7 +42,7 @@ class DoubanPage {
                 element.value=value;
                 break;
             case 'dropdown': // dropdown 
-                console.log("check");
+                // console.log("check");
                 try{
                     this.fillDropdown(element, value, elementParas);
                 } catch {err} {
@@ -53,14 +53,14 @@ class DoubanPage {
     } 
 
     fillDropdown(dropdown, value, keys){
-        console.log("filling dropdown");
+        // console.log("filling dropdown");
         let i=0;
         for (let key of keys){
             if (value==key) break;
             i+=1;
         }
 
-        console.log(i);
+        // console.log(i);
         if (i<keys.length) {
             dropdown.getElementsByClassName('options')[0].getElementsByClassName('sub')[i].click();
         }
@@ -108,8 +108,6 @@ class DoubanMusicPage2 extends DoubanPage {
         }
     }
 
-
-
     getElement(key){
         switch (key){
             case 'album': return ['text',null,document.getElementsByClassName('item basic')[0].getElementsByClassName('input_basic modified')];
@@ -138,29 +136,29 @@ class DoubanMusicPage3 extends DoubanPage { // TODO: auto-select image
     }
 } 
 
-class DoubanMoviePage1 extends DoubanPage {
-    keys=listingKeys['movie'];
-}
+// class DoubanMoviePage1 extends DoubanPage {
+//     keys=listingKeys['movie'];
+// }
 
-class DoubanMoviePage2 extends DoubanPage {
-    keys=listingKeys['movie'];
-}
+// class DoubanMoviePage2 extends DoubanPage {
+//     keys=listingKeys['movie'];
+// }
 
-class DoubanBookPage1 extends DoubanPage {
-    keys=listingKeys['book'];
-}
+// class DoubanBookPage1 extends DoubanPage {
+//     keys=listingKeys['book'];
+// }
 
-class DoubanBookPage2 extends DoubanPage {
-    keys=listingKeys['book'];
-}
+// class DoubanBookPage2 extends DoubanPage {
+//     keys=listingKeys['book'];
+// }
 
-class DoubanGamePage1 extends DoubanPage {
-    keys=listingKeys['game'];
-}
+// class DoubanGamePage1 extends DoubanPage {
+//     keys=listingKeys['game'];
+// }
 
-class DoubanGamePage2 extends DoubanPage {
-    keys=listingKeys['game'];
-}
+// class DoubanGamePage2 extends DoubanPage {
+//     keys=listingKeys['game'];
+// }
 
 
 // ===== SourcePage ======
@@ -184,7 +182,7 @@ class SourcePage {
                 if (key=='date') this.data[key]=this.formatDate(this.data[key]);
                 else if (key=='description'){
                     const suffix="本条目由豆瓣条目添加助手自动生成（https://www.douban.com/note/790499272/)，如有信息错误请更正。"
-                    this.data[key]=this.data[key]+"\n\n" + suffix;
+                    this.data[key]=this.data[key]+"\n\n========\n\n" + suffix;
                 }
             } catch (err) {
                 console.log("Error for collecting " + key);
@@ -263,7 +261,7 @@ class Bandcamp extends SourcePage {
             case 'isrc'          : return null;
             case 'tracks': 
                 return Array.from(document.getElementById('track_table').children[0].getElementsByClassName("track_row_view")).map((ele) =>{
-                                 return ele.textContent.replaceAll(/[\n\t ]+/g,' ').replace(/ *buy track */,'').replace(/ *lyrics */,'').replace(/ *video */,'').trim()
+                                 return ele.textContent.replaceAll(/[\n\t ]+/g,' ').replace(/ *buy track */,'').replace(/ *info */,'').replace(/ *lyrics */,'').replace(/ *video */,'').trim()
                              }).join('\n').trim(); 
             case 'description'   : 
                 let out=document.URL;
@@ -291,7 +289,15 @@ class AppleMusic extends SourcePage {
             case 'url': return document.URL;
             case 'album': return document.getElementsByClassName('album-header-metadata')[0].children[0].textContent.trim();
             case 'barcode': return null;
-            case 'artists': return document.getElementsByClassName('album-header-metadata')[0].children[1].textContent.trim();
+            case 'albumAltName': return null;
+            case 'artist0':
+            case 'artist1':
+            case 'artist2':
+                let i=parseInt(key.slice(-1));
+                let artists=document.getElementsByClassName('album-header-metadata')[0].children[1].textContent.trim();
+                try{
+                    return artists.split(/,|and/)[i].trim();
+                } catch (err) {return null;}
             case 'genre':
                 let genre=document.getElementsByClassName('album-header-metadata')[0].children[2].textContent.trim().split("·")[0].trim();
                 const genreNameMap={'Dance':'Electronic','Hip-Hop':'Rap','HipHop':'Rap','Alternative':'Rock', "Hip-Hop/Rap":'Rap'};
@@ -299,15 +305,27 @@ class AppleMusic extends SourcePage {
                 else return null;
             case 'releaseType': return 'Album'; // TODO
             case 'media': return 'Digital';
-            case 'date': return document.getElementsByClassName("bottom-metadata")[0].getElementsByClassName('song-released-container')[0].textContent.replace("RELEASED",'').trim() 
+            case 'date': return document.getElementsByClassName("bottom-metadata")[0].getElementsByClassName('song-released-container')[0].textContent.replace("RELEASED",'').trim();
             case 'label':
                 return document.getElementsByClassName("bottom-metadata")[0].getElementsByClassName('song-copyright')[0].textContent.replace(/℗ \d+ /,'');
             case 'numberOfDiscs': return "1"; // TODO
+            case 'isrc': return null;
             case 'tracks':
                 let tracksText="";
-                let songs=document.getElementsByClassName("songs-list")[0].getElementsByClassName('song-name');
-                for (i=0;i<songs.length;i++){
-                    tracksText+=`${i+1}. ${songs[i].textContent.trim()}\n`;
+                let songs=document.getElementsByClassName("songs-list")[0].getElementsByClassName('songs-list-row');
+                let song;
+                console.log("hre0");
+                for (let i=0;i<songs.length;i++){
+                    song=songs[i];
+                    let songName='';
+                    let songLength='';
+                    try {
+                        songName=song.getElementsByClassName('songs-list-row__song-name')[0].textContent.trim();
+                    } catch (err) {}
+                    try {
+                        songLength=song.getElementsByClassName('songs-list-row__length')[0].textContent.trim();
+                    } catch (err) {}
+                    tracksText+=`${i+1}. ${songName} ${songLength}\n`;
                 } 
                 return tracksText
             case 'description':
@@ -335,17 +353,17 @@ class Discogs extends SourcePage {
 
     collectItem(key){
         switch(key){
-            
-
-            
-            case 'url': return document.URL
-            case 'album': return document.getElementsByClassName('profile')[0].children[0].children[1].textContent.trim()
+            case 'url': return document.URL;
+            case 'album': return document.getElementsByClassName('profile')[0].children[0].children[1].textContent.trim();
+            case 'barcode': return null; // TODO
+            case 'albumAltName': return null;
             case 'artist0':
             case 'artist1':
             case 'artist2':
-                return Array.from(profileBlock.children[0].children[0].children).map((ele)=>{return ele.title.trim()}); // TODO 
-            case 'media': return 'Vinyl'; // default
-            case 'label': return 'Self-Released'; //default
+                let i=parseInt(key.slice(-1));
+                try{
+                    return document.getElementsByClassName('profile')[0].children[0].children[0].children[i].title.trim();
+                } catch (err) {return null;}
             case 'genre':
             case 'date':
             case 'media':
@@ -353,20 +371,35 @@ class Discogs extends SourcePage {
                 let profileBlock=document.getElementsByClassName('profile')[0];
                 const keyRenameMap={'Genre': 'genre', 'Year': 'date', "Format":"media","Released":'date', 'Label': 'label'};
                 const valueRenameMap={'Hip Hop':'Rap'}
-                for (let i=1;i<profileBlock.children.length-1;i+=2){ //This handles genre, media, date, label
-                    try{
-                        let key=profileBlock.children[i].textContent.replace(":","").trim();
-                        let value=profileBlock.children[i+1].children[0].textContent.trim(); // TODO: multiple genres, multiple labels, etc; empty entry
-                        key=keyRenameMap[key]
-                        if (key){
-                            if (valueRenameMap[value]) value=valueRenameMap[value];
-                            out[key]=value;
-                        }
-                    } catch (err){}
-                } // TODO
+                let out=null
+                try{
+                    for (let i=1;i<profileBlock.children.length-1;i+=2){ 
+                        let profileKey=profileBlock.children[i].textContent.replace(":","").trim();
+                        if (keyRenameMap[profileKey] && key==keyRenameMap[profileKey]){
+                            console.log("found " + key);
+                            let profileValue=profileBlock.children[i+1].children[0].textContent.trim(); // TODO: multiple genres, multiple labels, etc; empty entry
+                            console.log(profileValue);
+                            if (valueRenameMap[profileValue]){
+                                out=valueRenameMap[profileValue];
+                            } else if (profileValue){
+                                out=profileValue;
+                            } else {
+                                throw "No Value in profile block";
+                            } 
+                            return out;
+                        } 
+                    }
+                } catch (err){
+                    switch (key){
+                        case 'media': return "Vinyl";
+                        case 'label': return "Self-Released";
+                        default: return null;
+                    }
+                }
             
             case 'releaseType': return 'Album'; // TODO: detect single/ep/album by # of tracks
-            case 'numberOfDiscs': 1;
+            case 'numberOfDiscs': return '1';
+            case 'isrc': return null;
             case 'tracks':
                 let tracks=document.getElementById('tracklist').getElementsByTagName('tbody')[0]
                 let trackText="";
@@ -399,21 +432,21 @@ class Discogs extends SourcePage {
     
 }
 
-class Soundcloud extends SourcePage {
-    keys=listKeys['music'];
-}
+// class Soundcloud extends SourcePage {
+//     keys=listKeys['music'];
+// }
 
-class IMDB extends SourcePage {
-    keys=listKeys['movie'];
-}
+// class IMDB extends SourcePage {
+//     keys=listKeys['movie'];
+// }
 
-class Steam extends SourcePage {
-    keys=listKeys['game'];
-}
+// class Steam extends SourcePage {
+//     keys=listKeys['game'];
+// }
 
-class AmazonBook extends SourcePage {
-    keys=listKeys['book'];
-}
+// class AmazonBook extends SourcePage {
+//     keys=listKeys['book'];
+// }
 
 
 
@@ -461,6 +494,7 @@ let createButton = (currentPage)=>{
         
         switch (currentPage){
             case 'bandcamp':
+                console.log('bc');
                 try{
                     page=new Bandcamp();
                 } catch (err){console.log(err);}
@@ -487,10 +521,12 @@ let createButton = (currentPage)=>{
 }
 
 let main = ()=>{
+
+    //console.log("chekc");
     let currentPage=getCurrentPage();
 
     // Default action: add buttons to bandcamp/discogs/soundcloud/apple pages
-    
+    console.log(currentPage);
     switch(currentPage){
         case 'bandcamp':
         case 'discogs':
@@ -539,7 +575,7 @@ main();
 console.log('content script ends');
 
 
-// TODO
+// TODOß
 // https://www.discogs.com/Various-Sweet-House-Chicago/master/79323
 // https://adaptedrecords.bandcamp.com/album/freedom
 // https://music.apple.com/cn/album/%E6%90%96%E6%BB%BE86/1391495014 (date)
@@ -558,3 +594,4 @@ console.log('content script ends');
 // guess a release is EP/album by track count/track list numbering
 // Multiple artists on bandcamp? 
 // Add tags onto bandcamp description
+// discogs; remove (NUM) from label/artist affixes. 
