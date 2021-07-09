@@ -510,7 +510,8 @@ let createButton = (currentPage)=>{
         console.log("button clicked. ")
         try{
             let data=page.collect();
-            browser.runtime.sendMessage({"page":currentPage,"data": JSON.stringify(data)});
+            console.log(currentPage + JSON.stringify(data));
+            browser.runtime.sendMessage({page:currentPage,data: JSON.stringify(data)});
             console.log(data);
             window.open(page.doubanLink);
         } catch(err) {console.log(err);}

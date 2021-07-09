@@ -3,10 +3,10 @@
   "version": "0.2.0",
   "description": "一键添加豆瓣条目 Create Douban listing with one click",
   "main": "background.js",
-  "dependencies": {
-    "webextension-polyfill": "^0.7.0"
+  "dependencies": {},
+  "devDependencies": {
+    "webextension-polyfill": "^0.8.0"
   },
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

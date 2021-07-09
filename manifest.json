@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
-    "name": "Douban-Helper",
-    "version": "0.2",
+    "name": "DoubanListingHelper",
+    "version": "0.3",
     "description": "豆瓣添加条目助手",
     "icons": {
       "48": "icons/icon-48.png"
