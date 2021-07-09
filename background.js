@@ -17,8 +17,7 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) =>{
             console.log(msg.data);
             data=JSON.parse(msg.data);
             if (data['imgUrl']){
-                browser.downloads.download({'url': data['imgUrl']}
-                ).then(
+                browser.downloads.download({'url': data['imgUrl']}).then(
                     (id)=>{console.log('Image downloaded');}, 
                     (error)=>{console.log("Image download failed");}
                 );
