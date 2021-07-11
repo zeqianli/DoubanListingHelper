@@ -12,6 +12,7 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) =>{
         case "bandcamp":
         case "discogs":
         case "apple":
+        case "steam":
         // case "soundcloud": // TODO
             console.log("Metadata received in background");
             console.log(msg.data);
@@ -22,11 +23,11 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) =>{
                     (error)=>{console.log("Image download failed");}
                 );
             }
-    
             break;
         case "doubanMusic1":
+        case 'doubanGame1':
             if (data){
-                console.log("DoubanMusic1 message received and meta is stored in background.")
+                console.log("Douban message received and meta is stored in background.")
                 getActiveTab().then((tabs) =>{
                     browser.tabs.sendMessage(tabs[0].id, {'data':JSON.stringify(data)});
                     data=null;

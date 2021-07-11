@@ -4,9 +4,7 @@
     - 如果你长期添加大量豆瓣条目并有兴趣参与测试，请豆瓣私信我
 
 
-## 使用说明 Documentation
-
-**安装**
+## 安装 Installation
 
 - Firefox商店：https://addons.mozilla.org/en-US/firefox/addon/doubanlistinghelper/
 - Chrome商店：审核中
@@ -17,7 +15,7 @@
     - 理论上也支持Opera/Safari/Edge浏览器，未测试，如有测试结果请开issue/豆瓣私信告知。
 - 安装开发版本：点击左上角“main”，下拉菜单中选择“dev”，点击绿色按钮下载压缩包。
 
-**使用**
+## 使用 Documentation
 
 条目页面左上角会出现一个“Collect”按钮，点击后自动跳转至豆瓣添加条目界面自动填表，并把专辑封面下载到浏览器默认文件夹（我的是Downloads）。上传封面仍需手动，在默认下载文件夹选中即可。
 

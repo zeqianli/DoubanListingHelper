@@ -9,6 +9,8 @@
     "content_scripts": [
       {
         "matches": ["https://music.douban.com/new_subject",
+                    "https://www.douban.com/game/create",
+                    "*://store.steampowered.com/*",
                     "*://*.bandcamp.com/*",
                     "*://www.discogs.com/*master*",
                     "*://*.bandcamp.com/*",
