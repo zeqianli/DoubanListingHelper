@@ -555,7 +555,7 @@ class Steam extends SourcePage {
                     }
                 }
                 return null
-            case 'description': return document.getElementsByClassName("game_description_snippet")[0].textContent.trim()
+            case 'description': return document.getElementsByClassName("game_description_snippet")[0].textContent.trim();
             case 'imgUrl': return document.getElementsByClassName("game_header_image_full")[0].src.trim();
         }
     }
@@ -587,8 +587,8 @@ let getCurrentPage=()=>{
                 else if (nBasic>2) return 'doubanMusic2';
                 else return null;
             } else if (document.URL.includes('game')){
-                if (document.getElementsByClassName('create-input').length>=1) return 'doubanGame1'
-                else if (document.getElementsByName('thing_name').length) return 'doubanGame2';
+                if (document.getElementsByClassName('create-input').length>=1) return 'doubanGame1';
+                else if (document.getElementsByClassName("single-input").length>=2) return 'doubanGame2';
                 else return null;
             } else return null;
         case 'steampowered':
@@ -703,8 +703,8 @@ let main = ()=>{
         }
         if (page){
             page.fill(dataStored);
+            localStorage.removeItem(localStorageID);
         }
-        localStorage.removeItem(localStorageID);
     }
 }
 
