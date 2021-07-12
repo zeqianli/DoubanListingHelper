@@ -2,7 +2,7 @@ console.log('content script starts');
 
 let listingKeys={
     'music':    ['url','album','barcode','albumAltName','artist0','artist1','artist2','genre','releaseType','media','date','label','numberOfDiscs','isrc','tracks','description','imgUrl'],
-    'movie':    [],
+    'movie':    ['url','name','chineseName','altName','imdb','director','screenwriter','cast1','cast2','cast3','genre','website','region','language','year','date','debutRegion','length','description'],
     'game':     ['url','name','chineseName','platform','genre','date','description','imgUrl'],
     'book':     []
 }
@@ -233,7 +233,7 @@ class DoubanGamePage2 extends DoubanPage {
                 if (spl.length!=3) throw "date format problem!"
                 let boxes=element.getElementsByTagName('select');
                 for (let i=0;i<3;i++){
-                    boxes[i].value=spl[i].trim();
+                    boxes[i].value=parseInt(spl[i].trim()).toString();
                 }
             default: super.fillElement(element, elementType, elementParas,value)
             
@@ -517,9 +517,13 @@ class Discogs extends SourcePage {
 //     keys=listKeys['music'];
 // }
 
-// class IMDB extends SourcePage {
-//     keys=listKeys['movie'];
-// }
+class IMDB extends SourcePage {
+    constructor(){
+        super();
+        this.keys=listingKeys['movie'];
+        this.doubanLink=""
+    }
+}
 
 class Steam extends SourcePage {
     constructor(){
@@ -533,7 +537,7 @@ class Steam extends SourcePage {
         switch (key){
             case 'url': return document.URL;
             case 'name': return document.getElementById('appHubAppName').textContent.trim();
-            case 'chineseName': return null;
+            case 'chineseName': return this.collectItem('name');
             case 'platform': return Array.from(document.getElementsByClassName("game_area_purchase_platform")[0].children).map((ele)=>{return ele.classList[1].trim();}); // win, mac, linux
             case 'genre': 
                 for (let text of document.getElementById("genresAndManufacturer").textContent.trim().split(/[\n\t]+/)){
@@ -710,7 +714,7 @@ main();
 console.log('content script ends');
 
 
-// TODOß
+// TODO
 // https://www.discogs.com/Various-Sweet-House-Chicago/master/79323
 // https://adaptedrecords.bandcamp.com/album/freedom
 // https://music.apple.com/cn/album/%E6%90%96%E6%BB%BE86/1391495014 (date)

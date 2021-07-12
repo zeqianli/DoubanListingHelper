@@ -27,7 +27,7 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) =>{
         case "doubanMusic1":
         case 'doubanGame1':
             if (data){
-                console.log("Douban message received and meta is stored in background.")
+                console.log("Douban message received and meta is stored in background.");
                 getActiveTab().then((tabs) =>{
                     browser.tabs.sendMessage(tabs[0].id, {'data':JSON.stringify(data)});
                     data=null;
