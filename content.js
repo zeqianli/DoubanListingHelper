@@ -575,7 +575,7 @@ main();
 console.log('content script ends');
 
 
-// TODOß
+// TODOßg
 // https://www.discogs.com/Various-Sweet-House-Chicago/master/79323
 // https://adaptedrecords.bandcamp.com/album/freedom
 // https://music.apple.com/cn/album/%E6%90%96%E6%BB%BE86/1391495014 (date)
