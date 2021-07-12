@@ -1,10 +1,9 @@
 console.log('content script starts');
 
-
 let listingKeys={
     'music':    ['url','album','barcode','albumAltName','artist0','artist1','artist2','genre','releaseType','media','date','label','numberOfDiscs','isrc','tracks','description','imgUrl'],
-    'movie':    [],
-    'game':     [],
+    'movie':    ['url','name','chineseName','altName','imdb','director','screenwriter','cast1','cast2','cast3','genre','website','region','language','year','date','debutRegion','length','description'],
+    'game':     ['url','name','chineseName','platform','genre','date','description','imgUrl'],
     'book':     []
 }
 
@@ -129,13 +128,6 @@ class DoubanMusicPage2 extends DoubanPage {
  
 }
 
-class DoubanMusicPage3 extends DoubanPage { // TODO: auto-select image
-    constructor(){
-        super();
-        this.keys=listingKeys['music'];
-    }
-} 
-
 // class DoubanMoviePage1 extends DoubanPage {
 //     keys=listingKeys['movie'];
 // }
@@ -152,13 +144,102 @@ class DoubanMusicPage3 extends DoubanPage { // TODO: auto-select image
 //     keys=listingKeys['book'];
 // }
 
-// class DoubanGamePage1 extends DoubanPage {
-//     keys=listingKeys['game'];
-// }
 
-// class DoubanGamePage2 extends DoubanPage {
-//     keys=listingKeys['game'];
-// }
+class DoubanGamePage1 extends DoubanPage {
+    constructor(){
+        super();
+        this.keys=listingKeys['game'];
+    }
+
+    getElement(key){
+        switch(key) {
+            case 'name': return ['text',null,document.getElementsByName('thing_name')[0]]
+            default: return null
+        }
+    }
+
+    click(listing=null){
+        let button=document.getElementsByClassName('bn-flat1')[0];
+        button.click();
+    }
+}
+
+class DoubanGamePage2 extends DoubanPage {
+    constructor(){
+        super();
+        this.keys=listingKeys['game'];
+    }
+
+    getElement(key){
+        switch(key) {
+            case 'name': return ['text',null,document.getElementsByName('thing_name')[0]];
+            case 'chineseName': return ['text',null,document.getElementsByName('cn_name')[0]];
+            case 'platform':
+                const platformTranslator={'contains':false, 'data':{
+                    'win':'PC', 'mac':'Mac','macOS':'Mac','linux':'Linux'
+                }}
+                return ['checkbox',platformTranslator,document.getElementsByClassName('checkbox-input')[0]];
+            case 'genre': 
+                const genreTranslator={'contains':true,'data':{ 
+                    'action':'动作', 
+                    'adventure':'冒险',
+                    'sport':'体育','sports':'体育',
+                    'rpg':'角色扮演','role-playing':'角色扮演',
+                    'racing':'竞速',
+                    'simulation':'模拟',
+                    'fighting':'格斗',
+                    'shooter':'射击','shooting':'射击',
+                    'strategy':'即时战略','rts':'即时战略',
+                    'card':'卡牌',
+                    'massively multiplayer':'大型多人在线',
+                    'puzzle':'益智',
+                    'music':'音乐/旋律',
+                    'first-person shooter':'第一人称射击','fps':'第一人称射击',
+                    //光枪射击
+                    'visual novel':'文字冒险'
+                    //乱斗/清版
+                    //横版过关
+                }}
+                return ['checkbox',genreTranslator,document.getElementsByClassName('checkbox-input')[1]];
+            case 'date': return ['dateDropdown',null,document.getElementsByClassName("item-date")[0]];
+            case 'description': return ['textLarge',null,document.getElementsByName("desc")[0]];
+            default: return null;
+        }
+    }
+
+    fillElement(element, elementType, elementParas,value){
+        switch (elementType){
+            case 'checkbox': 
+                let checks=new Set();
+                for (let vData of value){
+                    for (let v in elementParas['data']){
+                        if (elementParas['contains'] && vData.toLowerCase().includes(v.toLowerCase())){
+                            checks.add(elementParas['data'][v]);
+                        } else if ((!elementParas['contains']) && (vData.toLowerCase()==v.toLowerCase())){
+                            checks.add(elementParas['data'][v]);
+                        }
+                    }
+                }
+                if (checks.size>0){
+                    for (let box of element.querySelectorAll(".option-list,.pbox")){
+                        if (checks.has(box.textContent.trim())){
+                            box.children[0].click();
+                        }
+                    }
+                }
+                break;
+            case 'dateDropdown': 
+                let spl=value.split('-');
+                if (spl.length!=3) throw "date format problem!"
+                let boxes=element.getElementsByTagName('select');
+                for (let i=0;i<3;i++){
+                    boxes[i].value=parseInt(spl[i].trim()).toString();
+                }
+            default: super.fillElement(element, elementType, elementParas,value)
+            
+        }
+    }
+}
 
 
 // ===== SourcePage ======
@@ -255,7 +336,7 @@ class Bandcamp extends SourcePage {
             case 'genre'         : return 'Electronic';
             case 'releaseType'   : return 'Album'; // TODO: infer by # of tracks
             case 'media'         : return 'Digital'; // Not labeled on Bandcamp
-            case 'date'          : return document.getElementsByClassName("tralbumData tralbum-credits")[0].textContent.trim().split('\n')[0].replace('released ','');
+            case 'date'          : return document.getElementsByClassName("tralbumData tralbum-credits")[0].textContent.trim().split('\n')[0].replace(/release[sd] ?/,'');
             case 'label'         : return "Self-Released"; // Bandcamp doesn't have a generic way for label
             case 'numberOfDiscs' : return "1";
             case 'isrc'          : return null;
@@ -436,13 +517,49 @@ class Discogs extends SourcePage {
 //     keys=listKeys['music'];
 // }
 
-// class IMDB extends SourcePage {
-//     keys=listKeys['movie'];
-// }
+class IMDB extends SourcePage {
+    constructor(){
+        super();
+        this.keys=listingKeys['movie'];
+        this.doubanLink=""
+    }
+}
 
-// class Steam extends SourcePage {
-//     keys=listKeys['game'];
-// }
+class Steam extends SourcePage {
+    constructor(){
+        super();
+        this.keys=listingKeys['game'];
+        this.doubanLink="https://www.douban.com/game/create";
+        this.data={};
+    }
+
+    collectItem(key){
+        switch (key){
+            case 'url': return document.URL;
+            case 'name': return document.getElementById('appHubAppName').textContent.trim();
+            case 'chineseName': return this.collectItem('name');
+            case 'platform': return Array.from(document.getElementsByClassName("game_area_purchase_platform")[0].children).map((ele)=>{return ele.classList[1].trim();}); // win, mac, linux
+            case 'genre': 
+                for (let text of document.getElementById("genresAndManufacturer").textContent.trim().split(/[\n\t]+/)){
+                    if (text.startsWith('Genre:')){
+                        text=text.replace('Genre:','').trim();
+                        return text.split(/ ?, ?/).map((ele)=>{return ele.trim()});
+                    }
+                }
+                return null
+            case 'date':
+                for (let text of document.getElementById("genresAndManufacturer").textContent.trim().split(/[\n\t]+/)){
+                    if (text.startsWith('Release Date:')){
+                        text=text.replace('Release Date:','').trim();
+                        return text;
+                    }
+                }
+                return null
+            case 'description': return document.getElementsByClassName("game_description_snippet")[0].textContent.trim();
+            case 'imgUrl': return document.getElementsByClassName("game_header_image_full")[0].src.trim();
+        }
+    }
+}
 
 // class AmazonBook extends SourcePage {
 //     keys=listKeys['book'];
@@ -461,23 +578,29 @@ let getCurrentPage=()=>{
     // Get current page 
     let match=document.URL.match(/([\w]+)\.com/);
     let site=match && match[1];
-    let page;
 
     switch(site){
         case 'douban':
-            let nBasic=document.getElementsByClassName('basic').length;
-            if (nBasic==2) page='doubanMusic1';
-            else if (nBasic>2) page='doubanMusic2';
-            else page='doubanMusic3';
-            break;
+            if (document.URL.includes('music')){
+                let nBasic=document.getElementsByClassName('basic').length;
+                if (nBasic==2) return 'doubanMusic1';
+                else if (nBasic>2) return 'doubanMusic2';
+                else return null;
+            } else if (document.URL.includes('game')){
+                if (document.getElementsByClassName('create-input').length>=1) return 'doubanGame1';
+                else if (document.getElementsByClassName("single-input").length>=2) return 'doubanGame2';
+                else return null;
+            } else return null;
+        case 'steampowered':
+            return 'steam';
         case 'bandcamp':
         case 'discogs':
         case 'soundcloud':
         case 'apple':
-            page=site;
-            break;
+            return site;
+        default:
+            return null;
     }
-    return page
 }
 
 const localStorageID='DoubanListingData';
@@ -506,11 +629,15 @@ let createButton = (currentPage)=>{
             case 'apple':
                 page=new AppleMusic();
                 break;
+            case 'steam':
+                page=new Steam();
+                break;
         }
         console.log("button clicked. ")
         try{
             let data=page.collect();
-            browser.runtime.sendMessage({"page":currentPage,"data": JSON.stringify(data)});
+            console.log(currentPage + JSON.stringify(data));
+            browser.runtime.sendMessage({page:currentPage,data: JSON.stringify(data)});
             console.log(data);
             window.open(page.doubanLink);
         } catch(err) {console.log(err);}
@@ -532,10 +659,12 @@ let main = ()=>{
         case 'discogs':
         case 'apple':
         // case 'soundcloud':
+        case 'steam':
             createButton(currentPage);
         case 'doubanMusic1':
         case 'doubanMusic2':
-        case 'doubanMusic3':
+        case 'doubanGame1':
+        case 'doubanGame2':
             browser.runtime.sendMessage({page:currentPage});
             break;
     }
@@ -546,8 +675,13 @@ let main = ()=>{
         console.log("Message from the background script:");
         if (message.data){
             let dataBackground=JSON.parse(message.data)
+            let page=null;
             if(currentPage=='doubanMusic1'){
-                let page=new DoubanMusicPage1();
+                page=new DoubanMusicPage1();
+            } else if (currentPage=='doubanGame1'){
+                page=new DoubanGamePage1();
+            }
+            if (page){
                 page.fill(dataBackground);
                 localStorage.setItem(localStorageID, JSON.stringify(dataBackground));
                 try{
@@ -561,11 +695,16 @@ let main = ()=>{
     let dataStored=localStorage.getItem(localStorageID)
     if (dataStored){
         dataStored=JSON.parse(dataStored);
+        let page;
         if (currentPage=='doubanMusic2'){
-            let page=new DoubanMusicPage2();
-            page.fill(dataStored);
+            page=new DoubanMusicPage2();
+        } else if (currentPage=='doubanGame2'){
+            page=new DoubanGamePage2();
         }
-        localStorage.removeItem(localStorageID);
+        if (page){
+            page.fill(dataStored);
+            localStorage.removeItem(localStorageID);
+        }
     }
 }
 
@@ -575,7 +714,7 @@ main();
 console.log('content script ends');
 
 
-// TODOßg
+// TODO
 // https://www.discogs.com/Various-Sweet-House-Chicago/master/79323
 // https://adaptedrecords.bandcamp.com/album/freedom
 // https://music.apple.com/cn/album/%E6%90%96%E6%BB%BE86/1391495014 (date)
