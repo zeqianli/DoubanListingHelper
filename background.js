@@ -13,6 +13,7 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) =>{
         case "discogs":
         case "apple":
         case "steam":
+        case 'imdb':
         // case "soundcloud": // TODO
             console.log("Metadata received in background");
             console.log(msg.data);
@@ -26,6 +27,9 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) =>{
             break;
         case "doubanMusic1":
         case 'doubanGame1':
+        case 'doubanMovie1':
+            console.log(data);
+            try{
             if (data){
                 console.log("Douban message received and meta is stored in background.");
                 getActiveTab().then((tabs) =>{
@@ -33,6 +37,7 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) =>{
                     data=null;
                 });
             }
+            } catch(err) {console.log(err);}
             break;
     }
 });

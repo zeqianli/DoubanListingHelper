@@ -2,7 +2,7 @@ console.log('content script starts');
 
 let listingKeys={
     'music':    ['url','album','barcode','albumAltName','artist0','artist1','artist2','genre','releaseType','media','date','label','numberOfDiscs','isrc','tracks','description','imgUrl'],
-    'movie':    ['url','name','chineseName','altName','imdb','director','screenwriter','cast1','cast2','cast3','genre','website','region','language','year','date','debutRegion','length','description'],
+    'movie':    ['url','type','name','chineseName','altName','imdb','director','screenwriter','cast0','cast1','cast2','genre','website','region','language','year','date','debutRegion','length','description','imgUrl'],
     'game':     ['url','name','chineseName','platform','genre','date','description','imgUrl'],
     'book':     []
 }
@@ -128,13 +128,95 @@ class DoubanMusicPage2 extends DoubanPage {
  
 }
 
-// class DoubanMoviePage1 extends DoubanPage {
-//     keys=listingKeys['movie'];
-// }
+class DoubanMoviePage1 extends DoubanPage {
+    constructor(){
+        super();
+        this.keys=listingKeys['movie'];
+    }
 
-// class DoubanMoviePage2 extends DoubanPage {
-//     keys=listingKeys['movie'];
-// }
+    getElement(key){
+        switch(key){
+            case 'type': return ['movieCheckbox',null,document.getElementsByClassName('sub')];
+            case 'name': return ['text',null,document.getElementById('p_title')];
+            case 'imdb': return ['text',null,document.getElementById('p_uid')];
+        }
+    }
+    click(listing){
+        if (listing['imdb']){
+            document.getElementsByName('subject_submit')[0].click();
+        } else{
+            document.getElementsByName("no_ud_submit")[0].click();
+        }
+    }
+
+    fillElement(element, elementType, elementParas, value){ 
+        console.log(value);
+        switch(elementType){
+            case 'movieCheckbox':
+                console.log("check" + value);
+                if (value=='movie'){
+                    element[0].click();
+                } else if (value=='tv'){
+                    element[1].click();
+                }
+                break;
+            default:
+                super.fillElement(element,elementType, elementParas, value);
+        }
+    }
+}
+
+class DoubanMoviePage2 extends DoubanPage {
+    constructor(){
+        super();
+        this.keys=listingKeys['movie'];
+    }
+
+    getElement(key){
+        switch(key){
+            case 'name': return ['text',null,document.getElementById('p_14')];
+            case 'chineseName': return ['text',null,document.getElementById('p_95')];
+            case 'altName': return ['text',null,document.getElementById('p_15_0')];
+            case 'director': return ['text',null,document.getElementById('p_18_0')];
+            case 'screenwriter': return ['text',null,document.getElementById('p_97_0')];
+            case 'cast0': return ['text',null,document.getElementById('p_19_0')];
+            case 'cast1': return ['text',null,document.getElementById('p_19_1')]; // TODO: multiple director/casts
+            case 'cast2': return ['text',null,document.getElementById('p_19_2')];
+            case 'genre': return ['movieDropdown',null, document.getElementsByClassName('opts-group')[0]]; // TODO
+            case 'website': return ['text',null,document.getElementById('p_45')];
+            case 'region': return ['movieDropdown',{'united states':'usa'},document.getElementsByClassName('opts-group')[1]];
+            case 'language': return ['movieDropdown',null,document.getElementsByClassName('opts-group')[2]];
+            case 'year': return ['text',null,document.getElementById('p_118')];
+            case 'date': return ['text',null,document.getElementById('date_p_17_0')];
+            case 'debutRegion': return ['text',null,document.getElementById('desc_p_17_0')];
+            case 'length': return ['text',null,document.getElementById('p_119_0')];
+            case 'description': return ['textLarge',null,document.getElementsByName('p_16_other')[0]];
+        }
+    }
+
+    fillElement(element, elementType, elementParas,value){
+        switch(elementType){
+            case 'movieDropdown':
+                let valueOriginal=value;
+                value=value.toLowerCase();
+                if (elementParas && elementParas[value]){
+                    value=elementParas[value];
+                }
+                let removeCharacter=(str)=>{return str.substr(str.indexOf(' ')+1)};
+                for (let option of element.getElementsByClassName('sub')){
+                    if (removeCharacter(option.textContent.trim()).toLowerCase().trim()==value){
+                        option.click();
+                        return;
+                    }
+                }
+                // none selected
+                element.getElementsByClassName('selected')[0].textContent=valueOriginal;
+                break;
+            default: super.fillElement(element,elementType,elementParas, value)
+        }
+    }
+
+}
 
 // class DoubanBookPage1 extends DoubanPage {
 //     keys=listingKeys['book'];
@@ -521,7 +603,80 @@ class IMDB extends SourcePage {
     constructor(){
         super();
         this.keys=listingKeys['movie'];
-        this.doubanLink=""
+        this.doubanLink="https://movie.douban.com/new_subject";
+    }
+    
+    collectItem(key){
+        let ele;
+        let match;
+        let i;
+        switch(key){
+            case 'url': return document.URL;
+            case 'type': 
+                ele=document.querySelector('[data-testid="hero-title-block__metadata"]');
+                if (ele.children[0].textContent.trim().startsWith('TV')) return 'tv';
+                else return 'movie';
+            case 'name': return document.getElementsByTagName('h1')[0].textContent.trim();
+            case 'chineseName': return this.collectItem('name');
+            case 'altName': 
+                try{
+                    return this.parseLine('title-details-akas')[0];
+                } catch(err) {return null;}
+            case 'imdb': 
+                match=document.URL.match(/\/title\/(.+)\//);
+                return match && match[1];
+            case 'director':
+                key='Director';
+            case 'screenwriter':
+                key='Writer';
+                try{
+                    for (let section of [document.getElementsByClassName('ipc-metadata-list--base')[0].children,document.querySelector('[data-testid="title-pc-wide-screen"]').getElementsByClassName("ipc-metadata-list__item"),document.querySelector('[data-testid="title-pc-expandable-panel"]').getElementsByClassName("ipc-metadata-list__item")]){
+                        for (let row of section){
+                            if (row.children[0].textContent.trim().startsWith(key)){
+                                return this.parseLine(row)[0];
+                            }
+                        }
+                    }
+                } catch (err) {}
+                return null;
+            case 'cast0':
+            case 'cast1':
+            case 'cast2':
+                i=parseInt(key.slice(-1));
+                try{
+                    return document.querySelectorAll("[data-testid='title-cast-item__actor']")[i].textContent.trim(); // TODO: add more actors
+                } catch (err){
+                    return null;
+                }
+            case 'genre': return this.parseLine("storyline-genres")[0];
+            case 'website': return document.querySelector('[data-testid="title-details-officialsites"]').getElementsByClassName('ipc-inline-list__item')[0].children[0].href.trim();
+            case 'region': return this.parseLine("title-details-origin")[0];
+            case 'language': return this.parseLine("title-details-languages")[0];
+            case 'year': 
+                ele=document.querySelector('[data-testid="hero-title-block__metadata"]');
+                if (this.collectItem('type')=='tv') return ele.children[1].textContent.trim().split('–')[0].trim();
+                else return ele.children[0].children[0].textContent.trim();
+            case 'date':
+                return this.parseLine("title-details-releasedate")[0].split(" (")[0];
+            case 'debutRegion':
+                match=this.parseLine("title-details-releasedate")[0].match(/\((.*)\)/);
+                return match && match[1];
+            case 'length':
+                return this.parseLine("title-techspec_runtime")[0];
+            case 'description':
+                try{
+                    return document.URL+"\n\n"+document.querySelector('[data-testid="storyline-plot-summary"]').textContent.trim();
+                } catch (err) {return document.URL+"\n\n";}
+            case 'imgUrl':
+                return document.querySelector('[data-testid="hero-media__poster"]').getElementsByTagName('img')[0].srcset.split(', ').slice(-1)[0].trim().split(' ')[0].trim();
+        }
+    }
+
+    parseLine(val){
+        if (typeof val === 'string' || val instanceof String){
+            val=document.querySelector('[data-testid="'+val+'"]');
+        }
+        return Array.from(val.getElementsByClassName("ipc-inline-list__item")).map((ele)=>{return ele.textContent.trim()});
     }
 }
 
@@ -590,6 +745,9 @@ let getCurrentPage=()=>{
                 if (document.getElementsByClassName('create-input').length>=1) return 'doubanGame1';
                 else if (document.getElementsByClassName("single-input").length>=2) return 'doubanGame2';
                 else return null;
+            } else if (document.URL.includes('movie')){
+                if (document.getElementsByClassName('item basic').length<=4) return 'doubanMovie1';
+                else return 'doubanMovie2';
             } else return null;
         case 'steampowered':
             return 'steam';
@@ -597,6 +755,7 @@ let getCurrentPage=()=>{
         case 'discogs':
         case 'soundcloud':
         case 'apple':
+        case 'imdb':
             return site;
         default:
             return null;
@@ -617,11 +776,7 @@ let createButton = (currentPage)=>{
         
         switch (currentPage){
             case 'bandcamp':
-                console.log('bc');
-                try{
-                    page=new Bandcamp();
-                } catch (err){console.log(err);}
-                console.log("bc2");
+                page=new Bandcamp();
                 break;
             case 'discogs': 
                 page=new Discogs();
@@ -631,6 +786,9 @@ let createButton = (currentPage)=>{
                 break;
             case 'steam':
                 page=new Steam();
+                break;
+            case 'imdb':
+                page=new IMDB();
                 break;
         }
         console.log("button clicked. ")
@@ -660,11 +818,14 @@ let main = ()=>{
         case 'apple':
         // case 'soundcloud':
         case 'steam':
+        case 'imdb':
             createButton(currentPage);
         case 'doubanMusic1':
         case 'doubanMusic2':
         case 'doubanGame1':
         case 'doubanGame2':
+        case 'doubanMovie1':
+        case 'doubanMovie2':
             browser.runtime.sendMessage({page:currentPage});
             break;
     }
@@ -680,8 +841,12 @@ let main = ()=>{
                 page=new DoubanMusicPage1();
             } else if (currentPage=='doubanGame1'){
                 page=new DoubanGamePage1();
+            } else if (currentPage=='doubanMovie1'){
+                console.log('this is movie1');
+                page=new DoubanMoviePage1();
             }
             if (page){
+                console.log(dataBackground);
                 page.fill(dataBackground);
                 localStorage.setItem(localStorageID, JSON.stringify(dataBackground));
                 try{
@@ -700,6 +865,8 @@ let main = ()=>{
             page=new DoubanMusicPage2();
         } else if (currentPage=='doubanGame2'){
             page=new DoubanGamePage2();
+        } else if (currentPage=='doubanMovie2'){
+            page=new DoubanMoviePage2();
         }
         if (page){
             page.fill(dataStored);

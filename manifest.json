@@ -10,12 +10,14 @@
       {
         "matches": ["https://music.douban.com/new_subject",
                     "https://www.douban.com/game/create",
+                    "https://movie.douban.com/new_subject",
                     "*://store.steampowered.com/*",
                     "*://*.bandcamp.com/*",
                     "*://www.discogs.com/*master*",
                     "*://*.bandcamp.com/*",
                     "*://www.discogs.com/*release*", 
-                    "*://music.apple.com/*/album/*"
+                    "*://music.apple.com/*/album/*",
+                    "*://*.imdb.com/title/*"
                 ],
         "js": ["node_modules/webextension-polyfill/dist/browser-polyfill.js","content.js"]
       }
