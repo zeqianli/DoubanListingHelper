@@ -530,7 +530,9 @@ class Discogs extends SourcePage {
             case 'artist2':
                 let i=parseInt(key.slice(-1));
                 try{
-                    return document.getElementsByClassName('profile')[0].children[0].children[0].children[i].title.trim();
+                    let artists=document.getElementsByClassName('profile')[0].children[0].children[0].children
+                    if (i<artists.length) return artists[i].title.trim();
+                    else return null
                 } catch (err) {
                     let artists=document.getElementsByTagName('h1')[0].getElementsByTagName('span');
                     if (i<artists.length) return artists[i].textContent.trim();
@@ -583,6 +585,7 @@ class Discogs extends SourcePage {
                         default: return null;
                     }
                 }
+                return null;
             
             case 'releaseType': return 'Album'; // TODO: detect single/ep/album by # of tracks
             case 'numberOfDiscs': return '1';
@@ -619,7 +622,11 @@ class Discogs extends SourcePage {
                         trackPos=(i+1).toString();
                         if (track.getAttribute('data-track-position')){
                             trackPos=track.getAttribute('data-track-position');
+                        } else {
+                            trackText+=(track.textContent.trim()+'\n');
+                            continue;
                         }
+                        console.log("hello");
                         trackArtist='';
                         trackTitle='';
                         trackDur='';
