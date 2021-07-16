@@ -517,7 +517,12 @@ class Discogs extends SourcePage {
     collectItem(key){
         switch(key){
             case 'url': return document.URL;
-            case 'album': return document.getElementsByClassName('profile')[0].children[0].children[1].textContent.trim();
+            case 'album': 
+                try {
+                    return document.getElementById('profile_title').children[1].textContent.trim();
+                } catch(err){
+                    return document.getElementsByTagName('h1')[0].textContent.split('–')[1].trim();
+                }
             case 'barcode': return null; // TODO
             case 'albumAltName': return null;
             case 'artist0':
@@ -526,31 +531,50 @@ class Discogs extends SourcePage {
                 let i=parseInt(key.slice(-1));
                 try{
                     return document.getElementsByClassName('profile')[0].children[0].children[0].children[i].title.trim();
-                } catch (err) {return null;}
+                } catch (err) {
+                    let artists=document.getElementsByTagName('h1')[0].getElementsByTagName('span');
+                    if (i<artists.length) return artists[i].textContent.trim();
+                    else return null;
+                }
             case 'genre':
             case 'date':
             case 'media':
             case 'label':
-                let profileBlock=document.getElementsByClassName('profile')[0];
+                let profileBlock;
+                let keyValuePair=[];
+
                 const keyRenameMap={'Genre': 'genre', 'Year': 'date', "Format":"media","Released":'date', 'Label': 'label'};
-                const valueRenameMap={'Hip Hop':'Rap'}
-                let out=null
+                const valueRenameMap={'Hip Hop':'Rap','File':'Digital'};
+
                 try{
-                    for (let i=1;i<profileBlock.children.length-1;i+=2){ 
-                        let profileKey=profileBlock.children[i].textContent.replace(":","").trim();
-                        if (keyRenameMap[profileKey] && key==keyRenameMap[profileKey]){
+                    profileBlock=document.getElementsByClassName('profile')[0];
+                    for (let i=1;i<profileBlock.children.length-1;i+=2){
+                        keyValuePair.push([profileBlock.children[i].textContent,profileBlock.children[i+1].textContent]);
+                    }
+                } catch(err){
+                    profileBlock=document.getElementById('release-header').children[2];
+                    for (let row of profileBlock.children){
+                        keyValuePair.push([row.children[0].textContent,row.children[1].textContent]);
+                    }
+                }
+
+                try{
+                    for (let keyValue of keyValuePair){ 
+                        let profileKey=keyRenameMap[keyValue[0].replace(":","").trim()];
+                        if (profileKey && key==profileKey){
                             console.log("found " + key);
-                            let profileValue=profileBlock.children[i+1].children[0].textContent.trim(); // TODO: multiple genres, multiple labels, etc; empty entry
-                            console.log(profileValue);
+                            let profileValue=keyValue[1].trim();
+                            if (profileKey!='date'){
+                                profileValue=profileValue.split(/[,–] /)[0].trim();
+                            }
                             if (valueRenameMap[profileValue]){
-                                out=valueRenameMap[profileValue];
+                                return valueRenameMap[profileValue];
                             } else if (profileValue){
-                                out=profileValue;
+                                return profileValue;
                             } else {
                                 throw "No Value in profile block";
                             } 
-                            return out;
-                        } 
+                        }            
                     }
                 } catch (err){
                     switch (key){
@@ -564,10 +588,16 @@ class Discogs extends SourcePage {
             case 'numberOfDiscs': return '1';
             case 'isrc': return null;
             case 'tracks':
-                let tracks=document.getElementById('tracklist').getElementsByTagName('tbody')[0]
+                let tracks;
+                try{
+                    tracks=document.getElementById('tracklist').getElementsByTagName('tr');
+                } catch(err){
+                    // not logged in, release page
+                    tracks=document.getElementById('release-tracklist').getElementsByTagName('tr');
+                }
                 let trackText="";
-                for (let i=0;i< tracks.children.length;i++){
-                    let track=tracks.children[i]
+                for (let i=0;i< tracks.length;i++){
+                    let track=tracks[i]
                     let trackPos=(i+1).toString();
                     let es=track.getElementsByClassName("tracklist_track_pos")
                     if (es.length>0) trackPos=es[0].textContent.trim();
@@ -617,7 +647,7 @@ class IMDB extends SourcePage {
                 if (ele.children[0].textContent.trim().startsWith('TV')) return 'tv';
                 else return 'movie';
             case 'name': return document.getElementsByTagName('h1')[0].textContent.trim();
-            case 'chineseName': return this.collectItem('name');
+            case 'chineseName': return null;
             case 'altName': 
                 try{
                     return this.parseLine('title-details-akas')[0];
