@@ -588,38 +588,77 @@ class Discogs extends SourcePage {
             case 'numberOfDiscs': return '1';
             case 'isrc': return null;
             case 'tracks':
-                let tracks;
+                let tracks,trackText;
+                let trackPos, trackArtist, trackTitle, trackDur;
                 try{
+                    // logged in, master or release; or not logged in, master page
                     tracks=document.getElementById('tracklist').getElementsByTagName('tr');
+                    trackText="";
+                    for (let i=0;i< tracks.length;i++){
+                        let track=tracks[i]
+                        trackPos=(i+1).toString();
+                        if (track.getAttribute('data-track-position')){
+                            trackPos=track.getAttribute('data-track-position');
+                        }
+                        let es=track.getElementsByClassName("tracklist_track_pos")
+                        if (es.length>0) trackPos=es[0].textContent.trim();
+                        trackTitle=''
+                        es=track.getElementsByClassName("tracklist_track_title")
+                        if (es.length>0) trackTitle=es[0].textContent.trim();
+                        trackDur=''
+                        es=track.getElementsByClassName("tracklist_track_duration")
+                        if (es.length>0) trackDur=es[0].textContent.trim();
+                        trackText+=`${trackPos} - ${trackTitle} ${trackDur}\n`
+                    }
                 } catch(err){
                     // not logged in, release page
                     tracks=document.getElementById('release-tracklist').getElementsByTagName('tr');
+                    trackText='';
+                    for (let i=0;i< tracks.length;i++){
+                        let track=tracks[i];
+                        trackPos=(i+1).toString();
+                        if (track.getAttribute('data-track-position')){
+                            trackPos=track.getAttribute('data-track-position');
+                        }
+                        trackArtist='';
+                        trackTitle='';
+                        trackDur='';
+                        for (let ele of track.children){
+                            try{
+                                if (ele.className.startsWith("artist") && ele.textContent.trim()){
+                                    trackArtist=ele.children[0].textContent.trim()+' - ';
+                                } else if (ele.className.startsWith("trackTitle")){
+                                    trackTitle=ele.children[0].textContent.trim()
+                                } else if (ele.className.startsWith("duration")){
+                                    trackDur=' '+ele.textContent.trim();
+                                }
+                            } catch (err){}
+                        }
+                        trackText+=`${trackPos}. ${trackArtist}${trackTitle}${trackDur}\n`
+                    }
+
                 }
-                let trackText="";
-                for (let i=0;i< tracks.length;i++){
-                    let track=tracks[i]
-                    let trackPos=(i+1).toString();
-                    let es=track.getElementsByClassName("tracklist_track_pos")
-                    if (es.length>0) trackPos=es[0].textContent.trim();
-                    let trackTitle=''
-                    es=track.getElementsByClassName("tracklist_track_title")
-                    if (es.length>0) trackTitle=es[0].textContent.trim();
-                    let trackDur=''
-                    es=track.getElementsByClassName("tracklist_track_duration")
-                    if (es.length>0) trackDur=es[0].textContent.trim();
-                    trackText+=`${trackPos} - ${trackTitle} ${trackDur}\n`
-                }
+                 
                 return trackText;
 
             case 'description': 
                 let description=document.URL;
                 try{
-                    description+='\n\n'+document.getElementById('notes').children[1].textContent.trim();
+                    let ele=document.getElementById('notes');
+                    if (!ele){
+                        ele=document.getelementsById('release-notes');
+                    }
+                    description+='\n\n'+ele.children[1].textContent.trim();
+                    
                 } catch (err){}
                 return description
 
             case 'imgUrl':
-                return JSON.parse(document.getElementById('page_content').getElementsByClassName("image_gallery")[0].attributes['data-images'].nodeValue)[0]['full'];
+                try{
+                    return JSON.parse(document.getElementById('page_content').getElementsByClassName("image_gallery")[0].attributes['data-images'].nodeValue)[0]['full'];
+                } catch(err){
+                    return document.querySelector('[property="og:image"]').content;
+                }
         }
     }
     
