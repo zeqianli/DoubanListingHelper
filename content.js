@@ -531,11 +531,11 @@ class Discogs extends SourcePage {
                 let i=parseInt(key.slice(-1));
                 try{
                     let artists=document.getElementsByClassName('profile')[0].children[0].children[0].children
-                    if (i<artists.length) return artists[i].title.trim();
+                    if (i<artists.length) return artists[i].title.replace(/(\(\d+\))/,'').trim();
                     else return null
                 } catch (err) {
                     let artists=document.getElementsByTagName('h1')[0].getElementsByTagName('span');
-                    if (i<artists.length) return artists[i].textContent.trim();
+                    if (i<artists.length) return artists[i].textContent.replace(/(\(\d+\))/,'').trim();
                     else return null;
                 }
             case 'genre':
