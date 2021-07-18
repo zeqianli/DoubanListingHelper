@@ -1,6 +1,6 @@
 # 豆瓣添加条目助手 DoubanListingHelper
 
-[English README][README_EN.md] / [关注我的豆瓣: lzqqqqqq](https://www.douban.com/people/49528893/)
+[English README][./README_EN.md] / [关注我的豆瓣: lzqqqqqq](https://www.douban.com/people/49528893/)
 
 ## 安装
 

@@ -1,6 +1,6 @@
 # DoubanListingHelper (English documentation)
 
-[中文文档][README.md] / [Follow me on Douban: lzqqqqqq](https://www.douban.com/people/49528893/)
+[中文文档][./README.md] / [Follow me on Douban: lzqqqqqq](https://www.douban.com/people/49528893/)
 
 [Douban](https://www.douban.com/) is a popular Chinese social media site centered around reviewing and categorizing music, movies/TVs, books, games, etc. Imagine Rate Your Music/Discogs, IMDB/Letterboxed, Goodreads, etc, all in one but you can post content, organize events, discuss in forums and much more. 
 
