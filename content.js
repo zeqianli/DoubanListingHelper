@@ -783,7 +783,10 @@ class Steam extends SourcePage {
             case 'url': return document.URL;
             case 'name': return document.getElementById('appHubAppName').textContent.trim();
             case 'chineseName': return this.collectItem('name');
-            case 'platform': return Array.from(document.getElementsByClassName("game_area_purchase_platform")[0].children).map((ele)=>{return ele.classList[1].trim();}); // win, mac, linux
+            case 'platform': 
+                try{
+                    return Array.from(document.getElementsByClassName("game_area_purchase_platform")[0].children).map((ele)=>{return ele.classList[1].trim();}); // win, mac, linux
+                } catch (err) {return 'win'};
             case 'genre': 
                 for (let text of document.getElementById("genresAndManufacturer").textContent.trim().split(/[\n\t]+/)){
                     if (text.startsWith('Genre:')){
