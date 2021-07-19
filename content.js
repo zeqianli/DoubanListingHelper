@@ -412,14 +412,28 @@ class Bandcamp extends SourcePage {
             case 'album'         : return document.getElementById('name-section').children[0].textContent.trim();
             case 'barcode'       : return null;
             case 'albumAltName'  : return null;
-            case 'artist0'       : return document.getElementById('name-section').children[1].getElementsByTagName('span')[0].textContent.trim();  // TODO: multiple artists? 
-            case 'artist1'       : return null
-            case 'artist2'       : return null;
+            case 'artist0'       : 
+            case 'artist1'       : 
+            case 'artist2'       : 
+                let i=parseInt(key.slice(-1));
+                let artists=document.getElementById('name-section').children[1].getElementsByTagName('span')[0].textContent.trim().split(/ *[,|&] */);
+                if (i<artists.length) return artists[i].trim();
+                else return null;
             case 'genre'         : return 'Electronic';
             case 'releaseType'   : return 'Album'; // TODO: infer by # of tracks
             case 'media'         : return 'Digital'; // Not labeled on Bandcamp
             case 'date'          : return document.getElementsByClassName("tralbumData tralbum-credits")[0].textContent.trim().split('\n')[0].replace(/release[sd] ?/,'');
-            case 'label'         : return "Self-Released"; // Bandcamp doesn't have a generic way for label
+            case 'label'         : 
+                try{
+                    return document.getElementsByClassName("back-link-text")[0].innerText.split('\n')[1].trim();
+                } catch (err){
+                    let accountName=document.getElementById("band-name-location").children[0].textContent.trim();
+                    if (accountName.toLowerCase()==this.collectItem('artist0').toLowerCase()){
+                        return "Self-Released";
+                    } else{
+                        return accountName;
+                    }
+                } 
             case 'numberOfDiscs' : return "1";
             case 'isrc'          : return null;
             case 'tracks': 
