@@ -1,10 +1,11 @@
 {
     "manifest_version": 2,
-    "name": "DoubanListingHelper",
+    "name": "豆瓣添加条目助手",
+    "short_name": "DoubanListingHelper",
     "version": "1.0",
-    "description": "豆瓣添加条目助手",
+    "description": "一键添加豆瓣条目，支持音乐（Discogs/Bandcamp/Apple Music）、电影(IMDB)、游戏（Steam）条目。",
     "icons": {
-      "48": "icons/icon-48.png"
+      "48": "icons/douban-48.png"
     },
     "content_scripts": [
       {
