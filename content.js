@@ -1,4 +1,4 @@
-console.log('content script starts');
+console.log('douban-helper: content script starts');
 
 // ====== Utilities ======
 
@@ -9,7 +9,7 @@ let getCurrentPage=()=>{
 
     switch(site){
         case 'douban':
-            let nBasic=document.getElementsByClassName('basic').length;
+            let nBasic = document.getElementsByClassName('basic').length;
             if (nBasic==2) page='douban-1';
             else if (nBasic>2) page='douban-2';
             else page='douban-3';
@@ -115,21 +115,21 @@ let fillDouban3=(meta,click=false) =>{ // TODO: auto-select image
 
 // ====== Bancamp/discogs/soundcloud/apple ======
 
-let createButton = (currentPage)=>{
+const createButton = (currentPage)=>{
     var button=document.createElement("Button");
     button.innerHTML ="Collect";
     button.style = "top:0;left:0;position:absolute;z-index:9999";
     button.onclick=function(){
-        let meta=collectMeta(currentPage);
+        const meta = collectMeta(currentPage);
         browser.runtime.sendMessage({page:currentPage,meta: JSON.stringify(meta)});
         window.open("https://music.douban.com/new_subject");
     };
     document.body.appendChild(button);
 }
 
-let formatDate=(dateStr)=>{
+const formatDate = (dateStr)=>{
     // supported format: yyyy年mm月dd日; yyyy/mm/dd; mm/dd/yyyy; month/dd/yyyy; dd/month/yyyy; yyyy; month/yyyy; mm/yyyy； 
-    try{
+    try {
         let spl=dateStr.split(/ ?[, 年月日] ?/).filter(n=>n);
         const monthNameMap={"jan":"01","feb":"02","mar":"03","apr":"04","may":"05","jun":"06","jul":"07","aug":"08","sep":"09","oct":"10","nov":"11","dec":"12","january":"01","february":"02","march":"03","april":"04","may":"05","june":"06","july":"07","august":"08","september":"09","october":"10","november":"11","december":"12"}
         let month="01", day="01", year='null';
@@ -161,7 +161,7 @@ let formatDate=(dateStr)=>{
     }
 }
 
-let collectMeta=(currentPage) => {
+const collectMeta = (currentPage) => {
     switch (currentPage){
         case "bandcamp":
             return collectBandcampMeta();
@@ -176,8 +176,8 @@ let collectMeta=(currentPage) => {
     }
 }
 
-let collectBandcampMeta=() =>{
-    out= {
+const collectBandcampMeta = () =>{
+    let out = {
         'url'           : document.URL,
         'album'         : document.getElementById('name-section').children[0].textContent.trim(),
         'barcode'       : null,
@@ -199,71 +199,118 @@ let collectBandcampMeta=() =>{
     out['date']=formatDate(out['date']);
     try{
         out['description']+="\n\n"+document.getElementsByClassName("tralbumData tralbum-about")[0].textContent.trim()
-    } catch (err){}
+    } catch (err) {
+        console.log(err)
+    }
     return out;
 }
 
-let collectDiscogsMeta=()=>{ // TODO
-    out={}
-    let keys=['url' ,'album','barcode','albumAltName' ,'artists','genre','releaseType'  ,'media','date','label','numberOfDiscs','isrc','tracks','description'  ,'imgUrl' ]
-    for (const key of keys) out[key]=null;
+const collectDiscogsMeta = () => {
+    let out = {}
+    const keys = [
+        'url' ,
+        'album',
+        'barcode',
+        'albumAltName',
+        'artists',
+        'genre',
+        'releaseType',
+        'media',
+        'date',
+        'label',
+        'numberOfDiscs',
+        'isrc',
+        'tracks',
+        'description',
+        'imgUrl'
+    ]
 
-    let profileBlock=document.getElementsByClassName('profile')[0]
-    out['url']= document.URL
-    out['album']= profileBlock.children[0].children[1].textContent.trim()
-    out['artists']=Array.from(profileBlock.children[0].children[0].children).map((ele)=>{return ele.title.trim()})
-    out['media']='Vinyl'; // default
-    out['label']='Self-Released'; //default
-    const keyRenameMap={'Genre': 'genre', 'Year': 'date', "Format":"media","Released":'date', 'Label': 'label'};
-    const valueRenameMap={'Hip Hop':'Rap'}
-    for (let i=1;i<profileBlock.children.length-1;i+=2){ //This handles genre, media, date, label
-        try{
-            let key=profileBlock.children[i].textContent.replace(":","").trim();
-            let value=profileBlock.children[i+1].children[0].textContent.trim(); // TODO: multiple genres, multiple labels, etc; empty entry
-            key=keyRenameMap[key]
-            if (key){
-                if (valueRenameMap[value]) value=valueRenameMap[value];
-                out[key]=value;
-            }
-        } catch (err){}
+    for (const key of keys) out[key] = null;
+
+    out['url'] = document.URL
+    out['album'] = Array.from(document.getElementsByTagName('meta')).filter(ele => ele.getAttribute('property') === 'og:title')[0].getAttribute('content').split(' - ')[1].trim()
+    out['artists'] = Array.from(document.getElementsByTagName('h1')[0].getElementsByTagName('span')).map(span => span.outerText.replace('*', ''))
+
+    const DomReleaseSchema = document.getElementById('release_schema')
+    const releaseSchema = DomReleaseSchema ? JSON.parse(DomReleaseSchema.textContent) : null
+
+    const profileBlocks = document.getElementsByTagName('table')[0] ? Array.from(document.getElementsByTagName('table')[0].getElementsByTagName('tr')) : null 
+
+    if (profileBlocks) {
+        out['media'] = 'Vinyl'; // default
+        out['label'] = 'Self-Released'; // default
+        const keyRenameMap = {
+            'Genre': 'genre',
+            'Year': 'date',
+            'Format': 'media',
+            'Released': 'date',
+            'Label': 'label'
+        };
+        const valueRenameMap = {
+            'Vinyl, LP, Album': 'Vinyl',
+            'Hip Hop': 'Rap'
+        }
+
+        profileBlocks.map(tr => {
+            try {
+                let key = tr.getElementsByTagName('th')[0].textContent.replace(':', '').trim();
+                let value = '';
+
+                if (key === 'Label' || key === 'Genre') {
+                    value = Array.from(tr.getElementsByTagName('td')[0].getElementsByTagName('a')).map(a => a.outerText)
+                } else {
+                    value = tr.getElementsByTagName('td')[0].textContent.trim();
+                }
+
+                key = keyRenameMap[key]
+                if (key){
+                    if (valueRenameMap[value]) {
+                        value = valueRenameMap[value]
+                    };
+                    out[key] = value;
+                }
+            } catch (err) {}
+        })
+        if (out['date']) out['date'] = formatDate(out['date']);
+    } else if (releaseSchema) {
+        out['album'] = releaseSchema.name
+        out['artists'] = releaseSchema.releaseOf.byArtist.map(item => item.name)
+        out['media'] = releaseSchema.musicReleaseFormat
+        out['label'] = releaseSchema.recordLabel.map(item => item.name)
+        out['genre'] = releaseSchema.genre
+        out['date'] = formatDate(releaseSchema.datePublished)
     }
-    if (out['date']) out['date']=formatDate(out['date']);
-    out['releaseType']='Album';
-    out['numberOfDiscs']=1;
+
+    out['releaseType'] = 'Album';
+    out['numberOfDiscs'] = 1;
+
     // tracks
-
-    let tracks=document.getElementById('tracklist').getElementsByTagName('tbody')[0]
-    let trackText="";
-    for (let i=0;i< tracks.children.length;i++){
-        let track=tracks.children[i]
-        let trackPos=(i+1).toString();
-        let es=track.getElementsByClassName("tracklist_track_pos")
-        if (es.length>0) trackPos=es[0].textContent.trim();
-        let trackTitle=''
-        es=track.getElementsByClassName("tracklist_track_title")
-        if (es.length>0) trackTitle=es[0].textContent.trim();
-        let trackDur=''
-        es=track.getElementsByClassName("tracklist_track_duration")
-        if (es.length>0) trackDur=es[0].textContent.trim();
-        trackText+=`${trackPos} - ${trackTitle} ${trackDur}\n`
+    const tracksDom = document.getElementById('release-tracklist').getElementsByTagName('tbody')[0]
+    let trackText = ''
+    for (let i=0; i< tracksDom.children.length; i++) {
+        const track = tracksDom.children[i]
+        const trackPos = track.children[0] ? track.children[0].textContent : (i + 1).toString();
+        const trackTitle = track.children[2] && track.children[2].children[0] ? track.children[2].children[0].outerText : '';
+        const trackDur = track.children[3] && track.children[3].children[0] ? track.children[3].children[0].outerText : '';
+        trackText += `${trackPos} - ${trackTitle} ${trackDur}\n`
     }
-    out['tracks']=trackText;
+    out['tracks'] = trackText;
 
     out['description']=out['url']
-    let noteBlock=document.getElementById('notes');
+    let noteBlock = document.getElementById('release-notes');
     if (noteBlock) out['description']+='\n\n'+noteBlock.children[1].textContent.trim();
 
-    out['imgUrl']=JSON.parse(document.getElementById('page_content').getElementsByClassName("image_gallery")[0].attributes['data-images'].nodeValue)[0]['full'];
-
+    out['imgUrl'] = releaseSchema ? releaseSchema.image : document.getElementsByTagName('picture')[0].children[0].getAttribute('src');
+    console.log('out - ', out)
     return out;
 }
 
 
-let collectSoundcloudMeta=()=>{ // TODO
+const collectSoundcloudMeta = () => { // TODO
     return null
 }
 
-let collectAppleMeta=()=>{ // TODO
+const collectAppleMeta = () => { // TODO
     out={}
     let keys=['url' ,'album','barcode','albumAltName' ,'artists','genre','releaseType'  ,'media','date','label','numberOfDiscs','isrc','tracks','description'  ,'imgUrl' ]
     for (const key of keys) out[key]=null;
@@ -307,7 +354,7 @@ let collectAppleMeta=()=>{ // TODO
 
 // ====== Testing ======
 
-let _metaTest={
+let _metaTest = {
     'album'         :'album'         ,
     'barcode'       : null           , //"727361514624"
     'albumAltName'  :'albumAltName'  ,
@@ -330,10 +377,10 @@ let _metaTest={
 // ====== Main ======
 
 //let meta=_metaTest;
-let currentPage=getCurrentPage();
+const currentPage = getCurrentPage();
 
 // Default action: add buttons to bandcamp/discogs/soundcloud/apple pages
-switch(currentPage){
+switch (currentPage) {
     case 'bandcamp':
     case 'discogs':
     case 'apple':
@@ -350,27 +397,26 @@ switch(currentPage){
 // only get message on douban-1 opened by the bandcamp button
 browser.runtime.onMessage.addListener(message => {
     console.log("Message from the background script:");
-    if (message.meta){
-        let metaBackground=JSON.parse(message.meta)
-        if(currentPage=='douban-1'){
-            fillDouban1(metaBackground,click=true);
+    if (message.meta) {
+        const metaBackground = JSON.parse(message.meta)
+        if (currentPage === 'douban-1') {
+            fillDouban1(metaBackground, click=true);
             localStorage.setItem(localStorageId, JSON.stringify(metaBackground));
         }
     }
-
 });
 
 // autofill douban-2 if meta is stored to localStorage
-let metaStored=localStorage.getItem(localStorageId)
-if (metaStored){
-    metaStored=JSON.parse(metaStored);
-    if (currentPage=='douban-2'){
-        fillDouban2(metaStored,click=false);
+let metaStored = localStorage.getItem(localStorageId)
+if (metaStored) {
+    metaStored = JSON.parse(metaStored);
+    if (currentPage=='douban-2') {
+        fillDouban2(metaStored, click=false);
     }
     localStorage.removeItem(localStorageId);
 }
 
-console.log('content script ends');
+console.log('douban-helper: content script ends');
 
 
 // TODO

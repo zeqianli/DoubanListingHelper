@@ -1,10 +1,10 @@
 {
   "name": "douban-listing-helper",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "一键添加豆瓣条目 Create Douban listing with one click",
   "main": "background.js",
   "dependencies": {
-    "webextension-polyfill": "^0.7.0"
+    "webextension-polyfill": "^0.10.0"
   },
   "devDependencies": {},
   "scripts": {
