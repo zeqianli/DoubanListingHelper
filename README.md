@@ -4,7 +4,7 @@ Last update: 2021
 
 [中文文档](./README_CN.md) / [Follow me on Douban](https://www.douban.com/people/49528893/)
 
-[Douban](https://www.douban.com/) is the largest Chinese media database and social network for reviewing and categorizing music, movies/TVs, books, games, etc. Imagine Rate Your Music,Discogs, IMDB,Letterboxed, Goodreads, Steam... all in one but you can also post content, organize events, discuss in forums and much more. 
+[Douban](https://www.douban.com/) is the largest Chinese media database and social network for reviewing and categorizing music, movies/TVs, books, games, etc. Imagine RateYourMusic, Discogs, IMDB, Letterboxed, Goodreads, Steam... all in one plus you can post content, organize events, create discussion forums and much more. 
 
 Music/file/book/game listings are the foundation Douban and are submited using a webform submitted by users manually. This is time-consuming and is subject to errors and format inconsistencies. This browser extension automate the process by scaping listing data from source sites and auto-fills forms on Douban. 
 
@@ -22,7 +22,7 @@ Music/file/book/game listings are the foundation Douban and are submited using a
 ### Reporting bugs
 
 - Please open issues on Github or message me on Douban to report bugs. Please attach the source page link and your brower name when reporting. 
-- **If you regularly add a large number of new listings and are interested in joining the testing team for future releases, please message me on Douban.**
+- **If you add listings regularly and want to help testing, please message me on Douban!**
 
 ## Usage
 
