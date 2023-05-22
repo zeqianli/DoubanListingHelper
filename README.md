@@ -1,41 +1,45 @@
-# 豆瓣添加条目助手 DoubanListingHelper
+# DoubanListingHelper (English documentation)
 
-[English README](./README_EN.md) / [关注我的豆瓣: lzqqqqqq](https://www.douban.com/people/49528893/)
+[中文文档](./README_CN.md) / [Follow me on Douban](https://www.douban.com/people/49528893/)
 
-## 安装
+[Douban](https://www.douban.com/) is the largest Chinese media database and social network for reviewing and categorizing music, movies/TVs, books, games, etc. Imagine Rate Your Music,Discogs, IMDB,Letterboxed, Goodreads, Steam... all in one but you can also post content, organize events, discuss in forums and much more. 
 
-- **Firefox商店**：https://addons.mozilla.org/en-US/firefox/addon/doubanlistinghelper/
-- **Chrome商店**：审核中
-- 插件商店由于审核会有延迟，从Github安装最新版：
-    - 点击Github页面绿色按钮下载压缩包。
-    - Firefox: 下载全部文件解压。在地址栏中输入"about:debugging"，点左侧栏中“此Firefox (This firefox)"，点“临时载入附加组件 (Load Temporary Add-on)”，选中文件夹中任何一个文件（例如manifest.json)。**这种方式每次重启firefox需重新安装。**
-    - Chrome：下载全部文件解压。在Chrome地址栏中输入chrome://extensions/, 点击开发者模式（Developer mode），再将插件文件夹拖至该页面。
-    - 理论上也支持Opera/Safari/Edge浏览器，未测试，如有测试结果请开issue/豆瓣私信告知。
-- **安装开发版本**：点击左上角“main”，下拉菜单中选择“dev”，点击绿色按钮下载压缩包。按上述步骤安装。
+Music/file/book/game listings are the foundation Douban and are submited using a webform submitted by users manually. This is time-consuming and is subject to errors and format inconsistencies. This browser extension automate the process by scaping listing data from source sites and auto-fills forms on Douban. 
 
-### 报错 
+## Installation
 
-- 欢迎开issue或在豆瓣私信我报错，报错时请附上页面链接和浏览器名称。
-- **如果你长期添加大量豆瓣条目，并想加入未来版本的测试团队，请豆瓣私信我。**
+- **Firefox store**: https://addons.mozilla.org/en-US/firefox/addon/doubanlistinghelper/
+- **Chrome store**: in review
+- Install from Github: 
+    - Click the green button to download the package.
+    - Firefox: Unzip the package. Type "about:debugging" in the address bar. Click "This firefox" and then "Load Temporary Add-on". Select any file in the unzipped folder (for example, manifest.json). **You have to re-install every time you restart Firefox.**
+    - Chrome: Upzip the package. Type "chrome://extensions/" in the address bar. Click "Developer mode" and drag the unzipped folder to the page. 
+    - Opera/Safari/Edge are theoretically supported by not tested. If you tried on them, please report results.  
+- **Install development version**：Click "main" on the upper left corner and choose "dev" from the manual. Then click the green button to download the package. Follow steps above. 
 
-## 使用
+### Reporting bugs
 
-条目页面左上角会出现一个“Collect”按钮，点击后自动跳转至豆瓣添加条目界面自动填表，并把专辑封面下载到浏览器默认文件夹（我的是Downloads）。上传封面仍需手动，在默认下载文件夹选中即可。
+- Please open issues on Github or message me on Douban to report bugs. Please attach the source page link and your brower name when reporting. 
+- **If you regularly add a large number of new listings and are interested in joining the testing team for future releases, please message me on Douban.**
 
-现支持如下条目页面：
-- 音乐：Bandcamp（专辑页面）, Discogs（master/release页面）, Apple Music（专辑页面）
-- 电影：IMDB（电影/电视页面）
-- 书籍：开发中
-- 游戏：Steam
+## Usage
 
-**请务必在自动填表后人工检查内容并修改，确保豆瓣条目信息的准确性。**
+A "Collect" button appears on the upper-left corner of source pages. Clicking the botton collects listing data from the page, redirect to Douban, and auto-fill forms. It also downloads the cover image to the default download folder (Downloads, in my case). Users still have to upload the cover image manually (just select from the default download folder)
 
-## 进展
+Supported source sites:
+- Music: Bandcamp (album page), Discogs（master and release page), Apple Music (album page)
+- Movie/TV: IMDB
+- Book: In development
+- Game: Steam
 
-- **1.0** 支持电影游戏条目。修复discogs未登录无法使用问题。
-- **0.3** 整个插件重写了一遍，为将来支持其他条目做准备。修复chrome支持，修复部分bug。打包发布Firefox和Chrome应用商店。
-- **0.2** 增加chrome支持。
-- **0.1** 支持firefox和bandcamp/discogs/apple music网站，之后会增加chrome浏览器和soundcloud/spotify等网站的支持。
+**Please double check auto filled entries and correct any errors. Accurate listing information is important for Douban.**
+
+## Progress
+
+- **1.0** Support Movie and Game listings. Fixed logged-out Discogs pages. Fixed many bugs. 
+- **0.3** Re-wrote the whole thing to support other listings in the future. Fixed Chrome support. Fixed some bugs. Submitted to Firefox store and Chrome store。
+- **0.2** Support Chrome。
+- **0.1** Support Firefox and Bandcamp/Discogs/Apple Music. Will add support for Chrome and Soundcloud/Spotify.
 
 ## License 
 
