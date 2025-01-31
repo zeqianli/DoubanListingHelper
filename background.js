@@ -14,6 +14,7 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) =>{
         case "apple":
         case "steam":
         case 'imdb':
+        case 'spotify':
         // case "soundcloud": // TODO
             console.log("Metadata received in background");
             console.log(msg.data);

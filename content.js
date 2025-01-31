@@ -1,7 +1,7 @@
 console.log('content script starts');
 
 let listingKeys={
-    'music':    ['url','album','barcode','albumAltName','artist0','artist1','artist2','genre','releaseType','media','date','label','numberOfDiscs','isrc','tracks','description','imgUrl'],
+    'music':    ['url','album','barcode','albumAltName','artist0','artist1','artist2','genre','releaseType','media','date','label','numberOfDiscs','isrc','tracks','description','imgUrl','reference'],
     'movie':    ['url','type','name','chineseName','altName','imdb','director','screenwriter','cast0','cast1','cast2','genre','website','region','language','year','date','debutRegion','length','description','imgUrl'],
     'game':     ['url','name','chineseName','platform','genre','date','description','imgUrl'],
     'book':     []
@@ -38,7 +38,7 @@ class DoubanPage {
             case 'text': // small textbox
             case 'textLarge': // large textbox
             case 'date': // date
-                element.value=value;
+                element.value=value || "";
                 break;
             case 'dropdown': // dropdown 
                 // console.log("check");
@@ -123,6 +123,7 @@ class DoubanMusicPage2 extends DoubanPage {
             case 'media': return ['dropdown',this.dropdownKeys['media'],document.getElementsByClassName('dropdown')[2]];
             case 'tracks': return ['textLarge',null,document.getElementsByClassName('item text section')[0].getElementsByClassName('textarea_basic')[0]];
             case 'description': return ['textLarge',null,document.getElementsByClassName('item text section')[1].getElementsByClassName('textarea_basic')[0]];
+            case 'reference': return ['textLarge',null,document.getElementsByClassName('item text section')[2].getElementsByClassName('textarea_basic')[0]];
         }
     }
  
@@ -397,6 +398,73 @@ class SourcePage {
 
 }
 
+class Spotify extends SourcePage {
+    constructor(){
+        super();
+        this.keys = listingKeys['music'];
+        this.doubanLink = "https://music.douban.com/new_subject";
+        this.data = {};
+    }
+
+    collectItem(key){
+        switch(key){
+            case 'url': 
+                return document.URL;
+            case 'album':
+                return document.querySelector('span[data-testid="entityTitle"] h1').textContent.trim();
+            case 'artist0':
+            case 'artist1':
+            case 'artist2':
+                let i = parseInt(key.slice(-1));
+                let artists = Array.from(document.querySelectorAll('a[data-testid="creator-link"]'))
+                    .map(a => a.textContent.trim());
+                return i < artists.length ? artists[i] : null;
+            case 'date':
+                try {
+                    return document.querySelector('.DmrVJc9vWCbjU_DuRvfe div p.e-9541-text').textContent;
+                } catch(err) {
+                    return null;
+                }
+            case 'tracks':
+                try {
+                    return Array.from(document.querySelectorAll('a[data-testid="internal-track-link"]'))
+                        .map((row, index) => {
+                            let title = row.querySelector('a[data-testid="internal-track-link"] div').textContent.trim();
+                            return `${index + 1}. ${title}`;
+                        }).join('\n');
+                } catch(err) {
+                    return null;
+                }
+            case 'description':
+                let desc = document.URL + '\n\n';
+                return desc;
+            case 'genre': 
+                return 'Pop'; // Spotify不直接显示流派信息
+            case 'releaseType':
+                return 'Album';
+            case 'media':
+                return 'Digital';
+            case 'label':
+                try {
+                    let copyright = document.querySelector('div.rTMkDBDp47Eo12ZEQv4U p').textContent;
+                    let match = copyright.match(/(?:℗|©) \d{4} (.+?)(?:,|\d|$)/);
+                    return match ? match[1].trim() : null;
+                } catch(err) {
+                    return null;
+                }
+            case 'imgUrl':
+                try {
+                    const link = document.querySelector('button[aria-label="View album artwork"] div img').src;
+                    return link + ".jpg";
+                } catch(err) {
+                    return null;
+                }
+            case 'reference':
+                return document.URL;
+        }
+    }
+}
+
 class Bandcamp extends SourcePage {
 
     constructor(){
@@ -447,6 +515,8 @@ class Bandcamp extends SourcePage {
                 } catch (err){}
                 return out;
             case 'imgUrl'       : return document.getElementById('tralbumArt').children[0].href; 
+            case 'reference':
+                return document.URL;
         }
     }
 }
@@ -508,7 +578,7 @@ class AppleMusic extends SourcePage {
             case 'description':
                 let description=document.URL;
                 try{
-                    description+='\n\n'+document.getElementsByClassName('product-page-header')[0].getElementsByClassName('truncated-content-container')[0].textContent.replace(/Editors’ Notes/,'').trim()
+                    description+='\n\n'+document.getElementsByClassName('product-page-header')[0].getElementsByClassName('truncated-content-container')[0].textContent.replace(/Editors' Notes/,'').trim()
                 } catch(err){}
                 return description;
 
@@ -516,6 +586,8 @@ class AppleMusic extends SourcePage {
                 
                 let _arr=document.getElementsByClassName('product-info')[0].getElementsByTagName('source')[1].srcset.split(" ");
                 return _arr[_arr.length-2];
+            case 'reference':
+                return document.URL;
         }
     }
 }
@@ -680,6 +752,8 @@ class Discogs extends SourcePage {
                 } catch(err){
                     return document.querySelector('[property="og:image"]').content;
                 }
+            case 'reference':
+                return document.URL;
         }
     }
     
@@ -850,6 +924,9 @@ let getCurrentPage=()=>{
         case 'apple':
         case 'imdb':
             return site;
+        case 'spotify':
+            if(document.URL.match(/open\.spotify\.com\/album/)) return 'spotify';
+            return null;
         default:
             return null;
     }
@@ -883,6 +960,9 @@ let createButton = (currentPage)=>{
             case 'imdb':
                 page=new IMDB();
                 break;
+            case 'spotify':
+                page=new Spotify();
+                break;
         }
         console.log("button clicked. ")
         try{
@@ -912,6 +992,7 @@ let main = ()=>{
         // case 'soundcloud':
         case 'steam':
         case 'imdb':
+        case 'spotify':
             createButton(currentPage);
         case 'doubanMusic1':
         case 'doubanMusic2':
@@ -949,7 +1030,7 @@ let main = ()=>{
         }
     });
 
-    // autofill douban-2 if da ta is stored to localStorage
+    // autofill douban-2 if data is stored to localStorage
     let dataStored=localStorage.getItem(localStorageID)
     if (dataStored){
         dataStored=JSON.parse(dataStored);
