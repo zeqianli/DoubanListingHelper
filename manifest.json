@@ -18,7 +18,8 @@
                     "*://*.bandcamp.com/*",
                     "*://www.discogs.com/*release*", 
                     "*://music.apple.com/*/album/*",
-                    "*://*.imdb.com/title/*"
+                    "*://*.imdb.com/title/*",
+                    "*://open.spotify.com/album/*"
                 ],
         "js": ["node_modules/webextension-polyfill/dist/browser-polyfill.js","content.js"]
       }
