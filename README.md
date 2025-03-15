@@ -1,5 +1,7 @@
 # DoubanListingHelper (English documentation)
 
+Note (Mar 2025): I don't have time to maintain this. Forks are welcome!
+
 Last update: 2021
 
 [中文文档](./README_CN.md) / [Follow me on Douban](https://www.douban.com/people/49528893/)
