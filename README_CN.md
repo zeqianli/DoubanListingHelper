@@ -2,6 +2,8 @@
 
 [English README](./README.md) / [关注我的豆瓣: lzqqqqqq](https://www.douban.com/people/49528893/)
 
+2025年3月：工作繁忙无空打理。欢迎Fork！
+
 ## 安装
 
 - **Firefox商店**：https://addons.mozilla.org/en-US/firefox/addon/doubanlistinghelper/
